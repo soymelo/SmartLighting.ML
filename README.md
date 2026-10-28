@@ -26,7 +26,10 @@ moradores. A hora local simulada usa deslocamento fixo UTC-03:00.
 
 ## Gerar os dados
 
-Requer Python 3.11 ou superior. Na raiz do projeto, execute:
+Requer Python 3.11 ou superior. Confira `python --version` antes de executar os
+comandos; em algumas instalações do Windows, `python` aponta apenas para o
+atalho da Microsoft Store e é necessário instalar o Python primeiro. Na raiz
+do projeto, execute:
 
 ```powershell
 $env:PYTHONPATH = "src"
