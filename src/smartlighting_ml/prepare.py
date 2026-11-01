@@ -8,9 +8,13 @@ import json
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from pathlib import Path
 
-from smartlighting_ml.generate import EVENT_COLUMNS, load_scenario, scenario_fingerprint
+from smartlighting_ml.generate import (
+    EVENT_COLUMNS,
+    WINDOW_MINUTES,
+    load_scenario,
+    scenario_fingerprint,
+)
 
-WINDOW_MINUTES = 15
 WINDOW_COLUMNS = ("scenario_id", "zone_id", "window_start_utc", "activation_count")
 EXAMPLE_COLUMNS = (
     "scenario_id", "zone_id", "prediction_at_utc", "local_hour", "local_weekday",

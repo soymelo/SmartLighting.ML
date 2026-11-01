@@ -1,11 +1,15 @@
 import json
 import tempfile
 import unittest
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
-from smartlighting_ml.generate import generate_events, load_scenario, write_dataset
-
+from smartlighting_ml.generate import (
+    _persistent_schedule,
+    generate_events,
+    load_scenario,
+    write_dataset,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -24,11 +28,11 @@ class GenerateTests(unittest.TestCase):
         events = generate_events(self.scenario, date(2026, 9, 1), 4, 42)
         identifiers = {event["event_identifier"] for event in events}
         self.assertEqual(len(events), len(identifiers))
-        start_utc = datetime(2026, 9, 1, 3, tzinfo=timezone.utc)
+        start_utc = datetime(2026, 9, 1, 3, tzinfo=UTC)
         end_utc = start_utc + timedelta(days=4)
         sensor_ids = {sensor["sensor_id"] for sensor in self.scenario["sensors"]}
         for event in events:
-            occurred = datetime.fromisoformat(event["occurred_at_utc"].replace("Z", "+00:00"))
+            occurred = datetime.fromisoformat(event["occurred_at_utc"])
             self.assertTrue(start_utc <= occurred < end_utc)
             self.assertIn(event["sensor_id"], sensor_ids)
             self.assertEqual(event["scenario_id"], "development")
@@ -56,6 +60,54 @@ class GenerateTests(unittest.TestCase):
         scenario["sensors"] = [dict(self.scenario["sensors"][0])]
         scenario["sensors"][0]["base_events_per_hour"] = 0
         self.assertEqual(generate_events(scenario, date(2026, 9, 1), 1, 42), [])
+
+    def test_persistent_period_last_multiple_windows(self) -> None:
+        scenario = load_scenario(ROOT / "scenarios" / "persistent_activity.json")
+        schedule = _persistent_schedule(scenario, 2, 42)
+        self.assertEqual(len(schedule), 2 * 96)
+        starts = [
+            index for index in range(1, len(schedule) - 2)
+            if "Z01" in schedule[index] and "Z01" not in schedule[index - 1]
+        ]
+        self.assertTrue(starts)
+        for index in starts:
+            self.assertTrue(all("Z01" in schedule[next_index] for next_index in range(index, index + 3)))
+            if index + 5 < len(schedule):
+                self.assertTrue(any(
+                    "Z01" not in schedule[next_index] for next_index in range(index + 3, index + 6)
+                ))
+
+    def test_persistent_events_are_reproducible(self) -> None:
+        scenario = load_scenario(ROOT / "scenarios" / "persistent_activity.json")
+        first = generate_events(scenario, date(2026, 9, 1), 2, 42)
+        self.assertEqual(first, generate_events(scenario, date(2026, 9, 1), 2, 42))
+        self.assertTrue(first)
+        self.assertEqual(len(first), len({event["event_identifier"] for event in first}))
+        self.assertEqual({event["scenario_id"] for event in first}, {"persistent_activity"})
+
+    def test_invalid_persistent_parameters_are_rejected(self) -> None:
+        scenario = load_scenario(ROOT / "scenarios" / "persistent_activity.json")
+        for key, value in (
+            ("start_probability_per_window", 1.5),
+            ("min_duration_windows", 1),
+            ("max_duration_windows", 2),
+            ("rate_multiplier", 0.5),
+        ):
+            with self.subTest(key=key), tempfile.TemporaryDirectory(dir=ROOT) as directory:
+                invalid = dict(scenario)
+                invalid["persistent_activity"] = dict(scenario["persistent_activity"])
+                invalid["persistent_activity"][key] = value
+                path = Path(directory) / "invalid.json"
+                path.write_text(json.dumps(invalid), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, key):
+                    load_scenario(path)
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            invalid = dict(scenario)
+            invalid["persistent_activity"] = None
+            path = Path(directory) / "invalid.json"
+            path.write_text(json.dumps(invalid), encoding="utf-8")
+            with self.assertRaisesRegex(TypeError, "persistent_activity"):
+                load_scenario(path)
 
 
 if __name__ == "__main__":

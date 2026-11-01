@@ -12,7 +12,7 @@ reais e não são inseridos no banco operacional da API.
 
 ## Por que simular
 
-A maquete não consegue reproduzir semanas de circulação residencial. Os dois
+A maquete não consegue reproduzir semanas de circulação residencial. Os três
 cenários em `scenarios/` são hipóteses declaradas, com seis sensores e seis zonas
 de nomes neutros. A correspondência estrutural com a maquete, incluindo os
 10 LEDs e seus vínculos com as zonas, está em
@@ -29,8 +29,11 @@ ativação. A preparação das janelas de 15 minutos também cria linhas com
 contagem zero: a ausência de evento é uma observação necessária para aprender
 e avaliar períodos de baixa circulação.
 
-Os eventos são amostrados por hora de uma distribuição de Poisson, com taxas
-definidas por sensor, horário, fim de semana e uma pequena variação diária.
+Em `development` e `holdout`, os eventos são amostrados por hora de uma
+distribuição de Poisson, com taxas definidas por sensor, horário, fim de semana
+e uma pequena variação diária. O cenário `persistent_activity` conserva essas
+taxas básicas, mas sorteia as ativações a cada 15 minutos e adiciona períodos
+temporários de maior circulação por zona.
 Essa distribuição é uma **hipótese de geração**, não uma observação sobre
 moradores. A hora local simulada usa deslocamento fixo UTC-03:00.
 
@@ -51,6 +54,17 @@ alterar qualquer JSON, gere novamente seus eventos antes de preparar as
 janelas; o preparador rejeita dados gerados com outra versão do cenário.
 Os resultados são ignorados pelo Git porque podem ser recriados. Deixe o
 cenário `holdout` reservado até a etapa de avaliação final.
+
+Para gerar o cenário adicional de atividade persistente, execute separadamente:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.generate --scenario scenarios/persistent_activity.json --start-local 2026-08-01 --days 42 --seed 42 --output-dir data/generated/persistent_activity
+.\.venv\Scripts\python.exe -m smartlighting_ml.prepare --scenario scenarios/persistent_activity.json --input-dir data/generated/persistent_activity --output-dir data/processed/persistent_activity
+```
+
+Esses comandos criam um conjunto separado; não substituem `development`.
+O estado simulado de maior circulação não é gravado nos exemplos do modelo.
 
 ## Preparar janelas e exemplos
 

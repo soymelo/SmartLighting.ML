@@ -1,7 +1,8 @@
 # Hipóteses dos cenários simulados
 
-Este documento registra como foram definidos `scenarios/development.json` e
-`scenarios/holdout.json`. Eles servem para desenvolver e testar o método de
+Este documento registra como foram definidos `scenarios/development.json`,
+`scenarios/holdout.json` e `scenarios/persistent_activity.json`. Eles servem
+para desenvolver e testar o método de
 previsão de **novas ativações de sensores por zona nos próximos 15 minutos**.
 Uma ativação pode ser causada por qualquer movimento detectado; o gerador não
 distingue pedestres, carros ou outras causas.
@@ -12,7 +13,7 @@ distingue pedestres, carros ou outras causas.
   veio dos cadastros no banco de dados da SmartLighting.Api. A correspondência
   está em [maquette-topology.md](maquette-topology.md). Os códigos `S01`–`S06` e
   `Z01`–`Z06` são nomes neutros, não os GUIDs do banco.
-- **Todos os valores de circulação dos dois JSONs são hipóteses ilustrativas.**
+- **Todos os valores de circulação dos três JSONs são hipóteses ilustrativas.**
   Não vieram de medições da maquete, do banco da API nem de uma contagem de rua
   residencial. Não há evidência para afirmar que uma zona real recebe mais
   passagens que outra ou que o pico real ocorre exatamente às 19h.
@@ -75,6 +76,43 @@ desenvolvimento tem taxa média `0,80 × 2,50 = 2` ativações por hora, ou
 `0,50` por intervalo de 15 minutos. Uma janela específica ainda pode ter zero
 ativações. Às 03h, a taxa é `0,80 × 0,12 = 0,096` por hora.
 
+## Cenário adicional com atividade persistente
+
+`persistent_activity.json` reutiliza exatamente a curva horária, as taxas por
+sensor, o fator de fim de semana e a variação diária de `development.json`.
+Assim, a diferença conceitual é a presença de períodos temporários de maior
+circulação. Não usamos o `holdout` para escolher esses parâmetros.
+
+O gerador percorre janelas consecutivas de 15 minutos. Cada zona tem um estado
+interno independente. Em uma janela calma, pode começar um período movimentado.
+Ele persiste pelo número sorteado de janelas, inclusive se cruzar a meia-noite.
+Enquanto durar, a taxa daquela zona é multiplicada antes de sortear as
+ativações de seus sensores. Sensores na mesma zona compartilham esse estado.
+Após o período, há pelo menos uma janela calma antes de um possível novo início.
+
+| Parâmetro | Valor | Interpretação e razão da escolha |
+| --- | ---: | --- |
+| `start_probability_per_window` | `0.02` | Em cada janela calma, há 2% de chance de iniciar um período movimentado. O limite superior teórico é 1,92 início por dia e zona se todas as 96 janelas estivessem calmas. A escolha cria episódios ocasionais, sem dominar o dia. |
+| `min_duration_windows` | `3` | Duração mínima de 45 minutos; após a primeira janela, ainda existem duas janelas com taxa elevada. |
+| `max_duration_windows` | `5` | Duração máxima de 75 minutos; limita a persistência a um período curto. |
+| `rate_multiplier` | `3.0` | Durante o período, a taxa esperada de ativações triplica. Escolhido para tornar o contraste observável sem eliminar as janelas vazias. |
+
+**Esses números não foram calibrados com dados reais.** São parâmetros
+ilustrativos para testar se a contagem recente acrescenta informação além da
+hora local. Não significam que uma rua residencial tenha episódios exatamente
+nessa frequência, duração ou intensidade.
+
+Por exemplo, `S02` às 19h em um dia útil sem variação diária tem taxa básica
+`0,65 × 2,50 × 15/60 = 0,40625` ativação esperada por janela. Durante um
+período movimentado, a média sobe para `1,21875` por janela. A janela ainda
+pode ter zero ativações em ambos os estados. Uma sequência recente com várias
+ativações pode sugerir ao futuro modelo que o período continua; não é garantia.
+
+O estado interno **não aparece** em `sensor_events.csv`, `windows.csv` nem
+`examples.csv`. O futuro modelo terá apenas horário, zona e contagens já
+observadas, como o firmware. A semente torna o sorteio reproduzível. O cenário
+original permanece disponível para comparar o efeito dessa hipótese.
+
 ## O que os zeros significam
 
 No conjunto de desenvolvimento gerado anteriormente com início em 2026-08-01,
@@ -97,11 +135,9 @@ atividade e qual consumo estimado resulta de suas decisões.
    percebido e fração de PWM não são a mesma medida.
 3. Comparar a previsão com referências simples, incluindo zero constante e
    uma regra baseada na hora, antes de afirmar vantagem do ML.
-4. Considerar períodos de atividade persistente somente como um cenário
-   adicional declarado, caso queiramos avaliar se as contagens recentes
-   ajudam a prever a próxima janela. O gerador atual sorteia cada hora a partir
-   da taxa horária e de um pequeno fator diário; ele não cria sequências de
-   chegadas deliberadamente.
+4. Comparar o cenário original com `persistent_activity` para avaliar se as
+   contagens recentes ajudam a prever a próxima janela. O gerador original
+   continua sorteando cada hora sem episódios persistentes explícitos.
 5. Não alterar as taxas apenas para reduzir a proporção de zeros ou melhorar
    as métricas. Se houver medições ou uma fonte adequada depois, registrar sua
    origem e criar um cenário calibrado separadamente.

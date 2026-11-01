@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 EVENT_COLUMNS = ("scenario_id", "event_identifier", "sensor_id", "zone_id", "occurred_at_utc")
+WINDOW_MINUTES = 15
 
 
 def scenario_fingerprint(scenario: dict[str, Any]) -> str:
@@ -65,6 +66,29 @@ def load_scenario(path: Path) -> dict[str, Any]:
         if not _nonnegative_number(sensor.get("base_events_per_hour")):
             raise ValueError("base_events_per_hour deve ser não negativo.")
         seen.add(sensor_id)
+
+    if "persistent_activity" in scenario:
+        activity = scenario["persistent_activity"]
+        if not isinstance(activity, dict):
+            raise TypeError("persistent_activity deve ser um objeto JSON.")
+        required = {
+            "start_probability_per_window", "min_duration_windows",
+            "max_duration_windows", "rate_multiplier",
+        }
+        if set(activity) != required:
+            raise ValueError("persistent_activity deve conter somente seus quatro parâmetros obrigatórios.")
+        probability = activity["start_probability_per_window"]
+        minimum = activity["min_duration_windows"]
+        maximum = activity["max_duration_windows"]
+        multiplier = activity["rate_multiplier"]
+        if not _nonnegative_number(probability) or probability > 1:
+            raise ValueError("start_probability_per_window deve estar entre 0 e 1.")
+        if not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 2:
+            raise ValueError("min_duration_windows deve ser um inteiro de pelo menos 2.")
+        if not isinstance(maximum, int) or isinstance(maximum, bool) or maximum < minimum:
+            raise ValueError("max_duration_windows deve ser um inteiro maior ou igual ao mínimo.")
+        if not _nonnegative_number(multiplier) or multiplier < 1:
+            raise ValueError("rate_multiplier deve ser pelo menos 1.")
     return scenario
 
 
@@ -85,11 +109,90 @@ def _poisson(rate: float, rng: random.Random) -> int:
     return count - 1
 
 
+def _persistent_schedule(scenario: dict[str, Any], days: int, seed: int) -> list[set[str]]:
+    """Sorteia períodos por zona; este estado não é exportado ao futuro modelo."""
+    activity = scenario["persistent_activity"]
+    rng = random.Random(f"persistent_activity:{seed}")
+    zones = sorted({sensor["zone_id"] for sensor in scenario["sensors"]})
+    remaining = {zone: 0 for zone in zones}
+    cooldown = {zone: False for zone in zones}
+    schedule: list[set[str]] = []
+    for _ in range(days * 24 * 60 // WINDOW_MINUTES):
+        busy: set[str] = set()
+        for zone in zones:
+            if cooldown[zone]:
+                cooldown[zone] = False
+                continue
+            if remaining[zone] == 0 and rng.random() < activity["start_probability_per_window"]:
+                remaining[zone] = rng.randint(
+                    activity["min_duration_windows"], activity["max_duration_windows"]
+                )
+            if remaining[zone] > 0:
+                busy.add(zone)
+                remaining[zone] -= 1
+                if remaining[zone] == 0:
+                    cooldown[zone] = True
+        schedule.append(busy)
+    return schedule
+
+
+def _generate_persistent_events(
+    scenario: dict[str, Any], start_local: date, days: int, seed: int
+) -> list[dict[str, str]]:
+    """Gera ativações em janelas de 15 minutos com períodos por zona."""
+    rng = random.Random(seed)
+    local_tz = timezone(timedelta(hours=scenario["utc_offset_hours"]))
+    schedule = _persistent_schedule(scenario, days, seed)
+    events: list[dict[str, str]] = []
+    windows_per_day = 24 * 60 // WINDOW_MINUTES
+    for day_index in range(days):
+        local_day = start_local + timedelta(days=day_index)
+        day_start = datetime.combine(local_day, time.min, tzinfo=local_tz)
+        daily_factor = rng.uniform(
+            1 - scenario["daily_variation"], 1 + scenario["daily_variation"]
+        )
+        weekend_factor = scenario["weekend_multiplier"] if local_day.weekday() >= 5 else 1.0
+        for window_index in range(windows_per_day):
+            window_start = day_start + timedelta(minutes=window_index * WINDOW_MINUTES)
+            hour_factor = scenario["hour_multipliers"][window_start.hour]
+            busy_zones = schedule[day_index * windows_per_day + window_index]
+            for sensor in scenario["sensors"]:
+                multiplier = (
+                    scenario["persistent_activity"]["rate_multiplier"]
+                    if sensor["zone_id"] in busy_zones else 1.0
+                )
+                hourly_rate = (
+                    sensor["base_events_per_hour"] * hour_factor
+                    * weekend_factor * daily_factor * multiplier
+                )
+                rate = hourly_rate * WINDOW_MINUTES / 60
+                for event_index in range(_poisson(rate, rng)):
+                    occurred_local = window_start + timedelta(
+                        seconds=rng.random() * WINDOW_MINUTES * 60
+                    )
+                    timestamp = occurred_local.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+                    identifier = uuid.uuid5(
+                        uuid.NAMESPACE_URL,
+                        f"{scenario['scenario_id']}/{seed}/{sensor['sensor_id']}/{timestamp}/{event_index}",
+                    )
+                    events.append({
+                        "scenario_id": scenario["scenario_id"],
+                        "event_identifier": str(identifier),
+                        "sensor_id": sensor["sensor_id"],
+                        "zone_id": sensor["zone_id"],
+                        "occurred_at_utc": timestamp,
+                    })
+    events.sort(key=lambda event: (event["occurred_at_utc"], event["sensor_id"]))
+    return events
+
+
 def generate_events(
     scenario: dict[str, Any], start_local: date, days: int, seed: int
 ) -> list[dict[str, str]]:
     if days < 1:
         raise ValueError("days deve ser positivo.")
+    if "persistent_activity" in scenario:
+        return _generate_persistent_events(scenario, start_local, days, seed)
     rng = random.Random(seed)
     local_tz = timezone(timedelta(hours=scenario["utc_offset_hours"]))
     events: list[dict[str, str]] = []
