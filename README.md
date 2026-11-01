@@ -5,10 +5,10 @@ prever a quantidade de novas ativações de sensores por zona nos próximos
 15 minutos e usar a previsão para escolher um brilho de repouso na maquete.
 O movimento continua prioritário no firmware.
 
-**Estado atual:** geração reproduzível de dados simulados e preparação das
-janelas de 15 minutos. Ainda não há treinamento, métricas de previsão, modelo
-exportado nem controle por ML no ESP32. Os eventos gerados não são medições
-reais e não são inseridos no banco operacional da API.
+**Estado atual:** geração reproduzível de dados simulados, preparação das
+janelas de 15 minutos e avaliação de regras simples. Ainda não há treinamento
+de ML, modelo exportado nem controle por ML no ESP32. Os eventos gerados não
+são medições reais e não são inseridos no banco operacional da API.
 
 ## Por que simular
 
@@ -83,6 +83,33 @@ Cada exemplo começa depois de uma hora completa de histórico. As colunas
 anteriores usam somente janelas encerradas antes de `prediction_at_utc`.
 Os dados preparados também são ignorados pelo Git e não entram no banco da API.
 
+## Avaliar regras de referência
+
+Após preparar `development` e `persistent_activity`, compare três regras usando
+os primeiros 28 dias locais para calcular médias e os 14 dias seguintes para
+teste. O comando só lê os CSVs existentes; não gera novos eventos ou exemplos:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.evaluate --input-dir data/processed/development --input-dir data/processed/persistent_activity --train-days 28
+```
+
+As regras são: `zero` (sempre prevê zero), `zona_hora` (média de ativações e
+frequência de janelas ativas por zona e hora calculadas **somente no treino**)
+e `ultima_janela` (repete a contagem dos 15 minutos anteriores). O relatório
+mostra MAE e RMSE para a contagem, e Brier para a probabilidade de ocorrer ao
+menos uma ativação. Mostra também recall, precisão e proporção de alertas com
+limiar **ilustrativo de 20%** de probabilidade. Esse limiar ainda não define
+brilho ou segurança; será revisto na etapa de controle da maquete.
+
+Todas as métricas se referem a dados simulados. Um MAE baixo isoladamente pode
+favorecer a regra `zero`, porque a maioria das janelas está vazia. Por isso,
+compare também a antecipação de atividade e quantos alertas cada regra produz.
+Os resultados desta execução estão em
+[`docs/baseline-evaluation.md`](docs/baseline-evaluation.md).
+O plano futuro de apresentação com o cálculo no ESP32 está em
+[`docs/firmware-demo-plan.md`](docs/firmware-demo-plan.md).
+
 ## Testar
 
 ```powershell
@@ -90,13 +117,13 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Os testes acima verificam o comportamento do gerador e do preparador.
+Os testes acima verificam o gerador, o preparador e a avaliação.
 
 ## Próximas etapas
 
 1. Conferir a topologia cadastrada na API antes da integração ao firmware.
-2. Revisar taxas e distribuição de zeros nos cenários simulados.
-3. Treinar e comparar uma referência simples com um modelo de regressão.
+2. Comparar 15, 30 e 60 minutos de histórico, mantendo os cenários declarados.
+3. Treinar um modelo de regressão e compará-lo com as regras simples.
 4. Avaliar em períodos e cenários separados do treinamento.
 5. Exportar parâmetros para C++ e validar igualdade de previsões com Python.
 6. Integrar o modelo ao firmware e testar a maquete com a API desligada.
