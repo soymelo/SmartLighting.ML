@@ -13,10 +13,9 @@ import json
 import math
 import random
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any
-
 
 EVENT_COLUMNS = ("scenario_id", "event_identifier", "sensor_id", "zone_id", "occurred_at_utc")
 
@@ -30,7 +29,7 @@ def scenario_fingerprint(scenario: dict[str, Any]) -> str:
 def load_scenario(path: Path) -> dict[str, Any]:
     scenario = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(scenario, dict):
-        raise ValueError("O cenário deve ser um objeto JSON.")
+        raise TypeError("O cenário deve ser um objeto JSON.")
 
     scenario_id = scenario.get("scenario_id")
     offset = scenario.get("utc_offset_hours")
@@ -57,7 +56,7 @@ def load_scenario(path: Path) -> dict[str, Any]:
     seen: set[str] = set()
     for sensor in sensors:
         if not isinstance(sensor, dict):
-            raise ValueError("Cada sensor deve ser um objeto JSON.")
+            raise TypeError("Cada sensor deve ser um objeto JSON.")
         sensor_id = sensor.get("sensor_id")
         if not isinstance(sensor_id, str) or not sensor_id.strip() or sensor_id in seen:
             raise ValueError("sensor_id deve ser único e não vazio.")
@@ -108,7 +107,7 @@ def generate_events(
                 rate = sensor["base_events_per_hour"] * hour_factor * weekend_factor * daily_factor
                 for event_index in range(_poisson(rate, rng)):
                     occurred_local = hour_start + timedelta(seconds=rng.random() * 3600)
-                    occurred_utc = occurred_local.astimezone(timezone.utc)
+                    occurred_utc = occurred_local.astimezone(UTC)
                     timestamp = occurred_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                     identifier = uuid.uuid5(
                         uuid.NAMESPACE_URL,

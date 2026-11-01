@@ -5,11 +5,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from pathlib import Path
 
 from smartlighting_ml.generate import EVENT_COLUMNS, load_scenario, scenario_fingerprint
-
 
 WINDOW_MINUTES = 15
 WINDOW_COLUMNS = ("scenario_id", "zone_id", "window_start_utc", "activation_count")
@@ -23,7 +22,7 @@ def read_events(path: Path, scenario: dict, metadata: dict) -> list[tuple[str, d
     """Lê eventos e rejeita identificadores, zonas ou horários incoerentes."""
     sensors = {sensor["sensor_id"]: sensor["zone_id"] for sensor in scenario["sensors"]}
     local_tz = timezone(timedelta(hours=scenario["utc_offset_hours"]))
-    start = datetime.combine(date.fromisoformat(metadata["start_local"]), time.min, local_tz).astimezone(timezone.utc)
+    start = datetime.combine(date.fromisoformat(metadata["start_local"]), time.min, local_tz).astimezone(UTC)
     end = start + timedelta(days=metadata["days"])
     events: list[tuple[str, datetime]] = []
     identifiers: set[str] = set()
@@ -39,11 +38,11 @@ def read_events(path: Path, scenario: dict, metadata: dict) -> list[tuple[str, d
                 raise ValueError(f"Sensor ou zona incompatível: {sensor_id}/{zone_id}.")
             if row["scenario_id"] != scenario["scenario_id"] or not identifier or identifier in identifiers:
                 raise ValueError("Cenário ou identificador de evento inválido ou duplicado.")
-            occurred = datetime.fromisoformat(row["occurred_at_utc"].replace("Z", "+00:00"))
-            if occurred.tzinfo is None or not start <= occurred.astimezone(timezone.utc) < end:
+            occurred = datetime.fromisoformat(row["occurred_at_utc"])
+            if occurred.tzinfo is None or not start <= occurred.astimezone(UTC) < end:
                 raise ValueError("Evento sem fuso horário ou fora do período gerado.")
             identifiers.add(identifier)
-            events.append((zone_id, occurred.astimezone(timezone.utc)))
+            events.append((zone_id, occurred.astimezone(UTC)))
     if len(events) != metadata["event_count"]:
         raise ValueError("A quantidade de eventos não confere com os metadados.")
     return events
@@ -52,7 +51,7 @@ def read_events(path: Path, scenario: dict, metadata: dict) -> list[tuple[str, d
 def build_windows(events: list[tuple[str, datetime]], scenario: dict, metadata: dict) -> list[dict]:
     """Cria todas as janelas por zona, mesmo quando não há ativação."""
     local_tz = timezone(timedelta(hours=scenario["utc_offset_hours"]))
-    start = datetime.combine(date.fromisoformat(metadata["start_local"]), time.min, local_tz).astimezone(timezone.utc)
+    start = datetime.combine(date.fromisoformat(metadata["start_local"]), time.min, local_tz).astimezone(UTC)
     days = metadata["days"]
     if not isinstance(days, int) or isinstance(days, bool) or days < 1:
         raise ValueError("days deve ser positivo.")
@@ -86,7 +85,7 @@ def build_examples(windows: list[dict], scenario: dict) -> list[dict]:
     for zone, rows in sorted(by_zone.items()):
         rows.sort(key=lambda row: row["window_start_utc"])
         for index in range(4, len(rows)):
-            prediction_at = datetime.fromisoformat(rows[index]["window_start_utc"].replace("Z", "+00:00"))
+            prediction_at = datetime.fromisoformat(rows[index]["window_start_utc"])
             local_time = prediction_at.astimezone(local_tz)
             examples.append({
                 "scenario_id": scenario["scenario_id"],
