@@ -1,6 +1,6 @@
 # SmartLighting.ML — dimerização adaptativa
 
-Este é o novo projeto de Machine Learning do TCC SmartLighting. O objetivo é
+Este é o projeto de Machine Learning do TCC SmartLighting. O objetivo é
 prever a quantidade de novas ativações de sensores por zona nos próximos
 15 minutos e usar a previsão para escolher um brilho de repouso na maquete.
 O movimento continua prioritário no firmware.
@@ -21,7 +21,8 @@ cadastros no banco de dados da SmartLighting.Api. As taxas de ativação e os
 multiplicadores horários ainda não foram medidos nem
 calibrados com uma fonte externa. O cenário `holdout` foi reservado para uma
 avaliação posterior e não deve ser usado para escolher características ou
-parâmetros do modelo.
+parâmetros do modelo. A origem e a justificativa de cada parâmetro estão em
+[`docs/scenario-assumptions.md`](docs/scenario-assumptions.md).
 
 Os arquivos `sensor_events.csv` contêm somente os instantes em que houve
 ativação. A preparação das janelas de 15 minutos também cria linhas com
