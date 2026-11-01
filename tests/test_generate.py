@@ -51,6 +51,12 @@ class GenerateTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "sensor_id"):
                 load_scenario(path)
 
+    def test_zero_rate_produces_no_activations(self) -> None:
+        scenario = dict(self.scenario)
+        scenario["sensors"] = [dict(self.scenario["sensors"][0])]
+        scenario["sensors"][0]["base_events_per_hour"] = 0
+        self.assertEqual(generate_events(scenario, date(2026, 9, 1), 1, 42), [])
+
 
 if __name__ == "__main__":
     unittest.main()

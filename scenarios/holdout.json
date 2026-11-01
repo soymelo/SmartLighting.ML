@@ -1,16 +1,16 @@
 {
   "scenario_id": "holdout",
-  "description": "Cenário reservado com circulação deslocada e zonas alteradas; não ajustar o modelo após olhar este resultado.",
+  "description": "Cenário reservado com horários e taxas de ativação alterados; não ajustar o modelo após olhar este resultado.",
   "utc_offset_hours": -3,
   "hour_multipliers": [0.30, 0.22, 0.18, 0.16, 0.20, 0.38, 0.85, 1.55, 1.20, 0.90, 0.85, 1.00, 1.15, 0.95, 0.90, 1.00, 1.35, 1.90, 2.10, 1.90, 1.50, 1.10, 0.75, 0.50],
   "weekend_multiplier": 1.10,
   "daily_variation": 0.30,
   "sensors": [
     {"sensor_id": "S01", "zone_id": "Z01", "base_events_per_hour": 0.65},
-    {"sensor_id": "S02", "zone_id": "Z01", "base_events_per_hour": 0.80},
-    {"sensor_id": "S03", "zone_id": "Z02", "base_events_per_hour": 0.70},
-    {"sensor_id": "S04", "zone_id": "Z02", "base_events_per_hour": 0.60},
-    {"sensor_id": "S05", "zone_id": "Z03", "base_events_per_hour": 0.60},
-    {"sensor_id": "S06", "zone_id": "Z04", "base_events_per_hour": 0.50}
+    {"sensor_id": "S02", "zone_id": "Z02", "base_events_per_hour": 0.80},
+    {"sensor_id": "S03", "zone_id": "Z03", "base_events_per_hour": 0.70},
+    {"sensor_id": "S04", "zone_id": "Z04", "base_events_per_hour": 0.60},
+    {"sensor_id": "S05", "zone_id": "Z05", "base_events_per_hour": 0.60},
+    {"sensor_id": "S06", "zone_id": "Z06", "base_events_per_hour": 0.50}
   ]
 }

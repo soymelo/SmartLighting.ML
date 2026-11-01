@@ -7,10 +7,10 @@
   "daily_variation": 0.20,
   "sensors": [
     {"sensor_id": "S01", "zone_id": "Z01", "base_events_per_hour": 0.80},
-    {"sensor_id": "S02", "zone_id": "Z01", "base_events_per_hour": 0.65},
-    {"sensor_id": "S03", "zone_id": "Z02", "base_events_per_hour": 0.55},
-    {"sensor_id": "S04", "zone_id": "Z02", "base_events_per_hour": 0.70},
-    {"sensor_id": "S05", "zone_id": "Z03", "base_events_per_hour": 0.45},
-    {"sensor_id": "S06", "zone_id": "Z04", "base_events_per_hour": 0.60}
+    {"sensor_id": "S02", "zone_id": "Z02", "base_events_per_hour": 0.65},
+    {"sensor_id": "S03", "zone_id": "Z03", "base_events_per_hour": 0.55},
+    {"sensor_id": "S04", "zone_id": "Z04", "base_events_per_hour": 0.70},
+    {"sensor_id": "S05", "zone_id": "Z05", "base_events_per_hour": 0.45},
+    {"sensor_id": "S06", "zone_id": "Z06", "base_events_per_hour": 0.60}
   ]
 }

@@ -5,11 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "smartlighting-ml"
 version = "0.1.0"
-description = "Treinamento reproduzivel para dimerizacao adaptativa da maquete SmartLighting"
+description = "Geracao e preparacao de dados para dimerizacao adaptativa da maquete SmartLighting"
 requires-python = ">=3.11"
 
 [project.scripts]
 smartlighting-generate = "smartlighting_ml.generate:main"
+smartlighting-prepare = "smartlighting_ml.prepare:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,6 +1,6 @@
-"""Gera eventos de passagem simulados e reproduzíveis para a maquete.
+"""Gera ativações de sensores simuladas e reproduzíveis para a maquete.
 
-Os identificadores S01... e Z01... representam apenas um cenário hipotético.
+Os identificadores S01... e Z01... espelham a estrutura da maquete, não seus GUIDs.
 Este módulo não escreve no banco de dados da API.
 """
 
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import random
@@ -18,6 +19,12 @@ from typing import Any
 
 
 EVENT_COLUMNS = ("scenario_id", "event_identifier", "sensor_id", "zone_id", "occurred_at_utc")
+
+
+def scenario_fingerprint(scenario: dict[str, Any]) -> str:
+    """Identifica os parâmetros exatos usados para gerar os eventos."""
+    encoded = json.dumps(scenario, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def load_scenario(path: Path) -> dict[str, Any]:
@@ -68,6 +75,8 @@ def _nonnegative_number(value: Any) -> bool:
 
 def _poisson(rate: float, rng: random.Random) -> int:
     """Amostra Poisson por Knuth; as taxas do cenário são pequenas."""
+    if rate == 0:
+        return 0
     limit = math.exp(-rate)
     product = 1.0
     count = 0
@@ -133,6 +142,7 @@ def write_dataset(
     metadata = {
         "source": "synthetic",
         "scenario_id": scenario["scenario_id"],
+        "scenario_sha256": scenario_fingerprint(scenario),
         "start_local": start_local.isoformat(),
         "days": days,
         "seed": seed,

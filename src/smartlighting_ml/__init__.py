@@ -1,1 +1,1 @@
-"""Ferramentas de treinamento da dimerização adaptativa SmartLighting."""
+"""Ferramentas de dados da dimerização adaptativa SmartLighting."""

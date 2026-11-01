@@ -7,5 +7,6 @@ build/
 dist/
 *.egg-info/
 data/generated/
+data/processed/
 models/
 .env
