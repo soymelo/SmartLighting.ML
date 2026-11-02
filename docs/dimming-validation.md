@@ -1,4 +1,4 @@
-# Comparação provisória dos limites de repouso
+# Comparação dos limites de repouso
 
 Este relatório mostra **decisões simuladas por zona e janela**, não o brilho
 executado no ESP32. Usamos os CSVs sintéticos existentes, com início em
@@ -46,9 +46,10 @@ porque as 500 janelas em PWM 50 compensam parte do tempo em PWM 10.
 O limite de 15% aumenta bastante o número de janelas em repouso baixo, mas
 também coloca nele mais janelas com movimento. O de 5% evita muitas dessas
 situações, porém mantém mais tempo no padrão e pode elevar a média devido às
-janelas altas. **Nenhum dos três limites de probabilidade foi escolhido como
-definitivo.** O limite alto de 25% também é provisório. Os níveis PWM 10/20/50
-permanecem os escolhidos para a maquete.
+janelas altas. Após analisar também os resultados por LED, escolhemos **5%**
+para o limite baixo e mantivemos **25%** para o limite alto. Essa é a política
+configurada para a maquete, ainda sem avaliação final reservada ou medições de
+circulação real. Os níveis PWM 10/20/50 permanecem os escolhidos.
 
 ## Arquivos para inspeção
 
@@ -64,8 +65,8 @@ Os comandos no README criam, em `data/evaluated/development/` e
   PWM por zona-janela e comparação com o repouso fixo 20.
 
 Esses arquivos ficam ignorados pelo Git, mas podem ser reproduzidos. O JSON
-`config/dimming_policy.json` continua com o limite baixo provisório de 10% e
-não foi alterado por esta avaliação.
+`config/dimming_policy.json` foi atualizado para o limite baixo escolhido de
+5%. O CSV desta comparação preserva as três alternativas, inclusive 10% e 15%.
 
 Para a [análise por LED](luminaire-validation.md), `zone_windows.py` reúne as
 seis decisões do mesmo horário e limite em um grupo completo. A leitura

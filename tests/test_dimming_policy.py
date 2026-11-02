@@ -16,6 +16,7 @@ class DimmingPolicyTests(unittest.TestCase):
         self.policy = load_policy(self.path)
 
     def test_probability_boundaries_choose_expected_pwm(self) -> None:
+        self.assertEqual((self.policy.standard_at, self.policy.high_at), (0.05, 0.25))
         standard_at = self.policy.standard_at
         high_at = self.policy.high_at
         cases = (
@@ -61,11 +62,11 @@ class DimmingPolicyTests(unittest.TestCase):
 
     def test_model_probability_can_drive_policy(self) -> None:
         weights = [0.0] * 28
-        weights[0] = math.log(0.08)
+        weights[0] = math.log(0.04)
         weights[-1] = 1.0
         model = PoissonModel(["Z01"], (30,), weights)
         row = {"zone_id": "Z01", "local_hour": 19, "local_weekday": 0, "previous_30m_count": 0}
         quiet_probability = model.predict(row)[1]
-        busy_probability = model.predict(row | {"previous_30m_count": 3})[1]
+        busy_probability = model.predict(row | {"previous_30m_count": 7})[1]
         self.assertEqual(self.policy.pwm_for_probability(quiet_probability), self.policy.low_pwm)
         self.assertEqual(self.policy.pwm_for_probability(busy_probability), self.policy.high_pwm)

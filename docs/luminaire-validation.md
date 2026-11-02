@@ -49,8 +49,10 @@ LED-janelas. Ela pode ser comparada numericamente ao alvo fixo PWM 20, mas
 potência real em função do PWM, o tempo de transição suave, a permanência
 em PWM 255 após detecção nem o circuito elétrico. Portanto, ainda não há
 medição de economia. O relatório mostra o compromisso entre usar mais vezes
-PWM 10 e iniciar mais LED-janelas com movimento nesse nível. Nenhum limite
-de probabilidade foi definido como final.
+PWM 10 e iniciar mais LED-janelas com movimento nesse nível. Escolhemos **5%**
+como limite baixo para reduzir essas ocorrências e mantivemos **25%** como
+limite alto. Os resultados continuam restritos à validação sintética; a
+política escolhida ainda não passou pela avaliação final reservada.
 
 ## Arquivos e reprodução
 

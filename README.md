@@ -7,7 +7,7 @@ O movimento continua prioritário no firmware.
 
 **Estado atual:** geração reproduzível de dados simulados, preparação das
 janelas de 15 minutos, avaliação de regras simples e treinamento de uma
-regressão de Poisson em Python. Uma política provisória em Python transforma
+regressão de Poisson em Python. Uma política configurada em Python transforma
 a chance prevista em três níveis de repouso. Os parâmetros treinados são
 salvos em JSON, mas ainda não há implementação do cálculo em C++ nem controle
 por ML no ESP32. Os eventos gerados não são medições reais e não são inseridos
@@ -144,9 +144,10 @@ Os níveis definidos para a maquete ficam em
 [`config/dimming_policy.json`](config/dimming_policy.json): PWM baixo `10`,
 padrão `20` e alto `50`, numa escala de 0 a 255. A política
 usa a **chance de pelo menos uma ativação nos próximos 15 minutos**, produzida
-por `PoissonModel.predict()`: abaixo de 10% escolhe baixo; de 10% até menos
-de 25%, padrão; a partir de 25%, alto. Os dois limites foram escolhidos apenas
-para iniciar a implementação e **ainda não foram otimizados ou validados**.
+por `PoissonModel.predict()`: abaixo de 5% escolhe baixo; de 5% até menos
+de 25%, padrão; a partir de 25%, alto. Escolhemos esses limites após a análise
+exploratória dos sete dias de validação sintética. Eles ainda não foram
+avaliados no teste final reservado nem em circulação real.
 Para experimentar **uma probabilidade informada manualmente**, sem ler os CSVs
 nem percorrer as janelas:
 
@@ -158,16 +159,18 @@ $env:PYTHONPATH = "src"
 Esse exemplo retorna `20/255` e não lista janelas. Para ver a decisão de cada
 janela, use a avaliação abaixo. A previsão e a decisão ficam separadas:
 alterar os níveis ou os limites no JSON não exige treinar novamente o ML,
-mas exigirá repetir a futura avaliação do controle. O firmware ainda utiliza
+mas exigirá repetir a avaliação do controle. O firmware ainda utiliza
 repouso fixo `20/255`, movimento com alvo `255/255` e o fade atual. O próximo
-passo é analisar os limites de probabilidade e a decisão por luminária. Veja
+passo é levar a política escolhida para a futura integração. Veja
 [`docs/dimming-policy.md`](docs/dimming-policy.md).
 
 ## Ver as decisões por janela
 
 Com os exemplos já preparados e o relatório de treino de cada cenário,
-compare limites de **chance prevista** de 5%, 10% e 15% para escolher o
-repouso baixo, mantendo o limite alto provisório de 25% do JSON. Esses
+compare os limites de **chance prevista** de 5%, 10% e 15% usados para escolher o
+repouso baixo, mantendo o limite alto de 25% do JSON. O limite configurado
+após essa comparação é 5%; as três alternativas permanecem no relatório
+para mostrar a decisão. Esses
 percentuais são probabilidades, não valores de PWM. O programa **não gera novos
 eventos** nem usa os 14 dias finais ou
 o cenário `holdout`. Reajusta o modelo nos primeiros 21 dias e mostra somente
@@ -252,12 +255,11 @@ política de brilho e os vínculos entre zonas e LEDs.
 
 ## Próximas etapas
 
-1. Examinar os resultados por LED e escolher os limites de probabilidade,
-   explicitando o compromisso entre repouso baixo e janelas com movimento.
-2. Definir o comportamento para zonas novas que o modelo ainda não conhece.
-3. Fazer a avaliação final com o cenário `holdout` sem usá-lo para ajustes.
-4. Converter o cálculo do modelo para C++ e validar igualdade com Python.
-5. Integrar o modelo ao firmware e testar a maquete com a API desligada.
+1. Definir o comportamento para zonas novas que o modelo ainda não conhece.
+2. Fazer a avaliação final da política escolhida com o cenário `holdout`, sem
+   usá-lo para reajustar os limites.
+3. Converter o cálculo do modelo para C++ e validar igualdade com Python.
+4. Integrar o modelo ao firmware e testar a maquete com a API desligada.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.

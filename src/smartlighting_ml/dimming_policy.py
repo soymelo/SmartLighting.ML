@@ -1,4 +1,4 @@
-"""Converte a chance prevista de atividade em brilho de repouso provisório."""
+"""Converte a chance prevista de atividade em brilho de repouso configurado."""
 
 from __future__ import annotations
 

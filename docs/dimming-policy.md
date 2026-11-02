@@ -7,14 +7,18 @@ diretamente, para escolher o PWM de repouso:
 
 | Chance prevista | Nível | PWM de 8 bits |
 | --- | --- | ---: |
-| Menor que 10% | Baixo | 10/255 |
-| De 10% até menos de 25% | Padrão | 20/255 |
+| Menor que 5% | Baixo | 10/255 |
+| De 5% até menos de 25% | Padrão | 20/255 |
 | A partir de 25% | Alto | 50/255 |
 
-Os níveis PWM 10/20/50 foram aceitos para a maquete. Os **limites de
-probabilidade** de 10% e 25% continuam provisórios: não vieram do treino nem
-do banco da API. O percentual de probabilidade e o valor de PWM são grandezas
-diferentes. PWM não mede diretamente consumo elétrico.
+Os níveis PWM 10/20/50 foram aceitos para a maquete. Escolhemos os **limites
+de probabilidade** de 5% e 25% após comparar decisões nos dados sintéticos
+de validação. O corte baixo de 5% reduz as janelas ativas que começam em PWM
+10 em relação às alternativas de 10% e 15%. O corte alto de 25% foi mantido;
+não o comparamos com outras alternativas. A política ainda não foi avaliada
+no teste final reservado nem em circulação real. O percentual de probabilidade
+e o valor de PWM são grandezas diferentes. PWM não mede diretamente consumo
+elétrico.
 
 `load_policy()` valida o JSON, inclusive a ordem crescente dos PWM e dos
 limites. `level_for_probability()` decide baixo, padrão ou alto;
@@ -36,6 +40,7 @@ maquete. Na futura integração, LEDs compartilhados por zonas deverão usar o
 maior nível de repouso solicitado. Se faltar horário válido para a previsão,
 o padrão proposto é o nível intermediário de 20/255.
 
-Comparamos os limites baixos de 5%, 10% e 15% nos dias de validação; os
-resultados estão em [`dimming-validation.md`](dimming-validation.md). Nenhum
-limite foi aprovado automaticamente.
+Comparamos os limites baixos de 5%, 10% e 15% nos dias de validação e
+escolhemos 5% para a configuração. Os resultados por zona estão em
+[`dimming-validation.md`](dimming-validation.md) e por LED em
+[`luminaire-validation.md`](luminaire-validation.md).

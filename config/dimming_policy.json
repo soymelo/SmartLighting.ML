@@ -6,7 +6,7 @@
     "high": 50
   },
   "probability_thresholds": {
-    "standard_at": 0.10,
+    "standard_at": 0.05,
     "high_at": 0.25
   }
 }

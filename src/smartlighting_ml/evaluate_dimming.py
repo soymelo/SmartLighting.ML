@@ -1,4 +1,4 @@
-"""Mostra, por janela de validação, a decisão de brilho para limites provisórios."""
+"""Compara, por janela de validação, limites de decisão do brilho."""
 
 from __future__ import annotations
 
