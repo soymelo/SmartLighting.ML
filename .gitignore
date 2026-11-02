@@ -8,5 +8,6 @@ dist/
 *.egg-info/
 data/generated/
 data/processed/
+data/evaluated/
 models/
 .env

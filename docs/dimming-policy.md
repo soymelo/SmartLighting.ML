@@ -1,4 +1,4 @@
-# Política provisória de brilho de repouso
+# Política de brilho de repouso
 
 O modelo treinado estima a quantidade média de ativações de uma zona na
 próxima janela de 15 minutos e a chance de haver ao menos uma ativação.
@@ -11,11 +11,10 @@ diretamente, para escolher o PWM de repouso:
 | De 10% até menos de 25% | Padrão | 20/255 |
 | A partir de 25% | Alto | 50/255 |
 
-Os limites de 10% e 25% são **provisórios** e não vieram do treino, do banco
-da API nem de uma medição da maquete. O valor padrão 20/255 já foi considerado
-adequado nos testes visuais iniciais. Os valores 10 e 50 aguardam teste físico.
-Esses números representam a razão do PWM; não medem diretamente a claridade
-percebida nem o consumo elétrico.
+Os níveis PWM 10/20/50 foram aceitos para a maquete. Os **limites de
+probabilidade** de 10% e 25% continuam provisórios: não vieram do treino nem
+do banco da API. O percentual de probabilidade e o valor de PWM são grandezas
+diferentes. PWM não mede diretamente consumo elétrico.
 
 `load_policy()` valida o JSON, inclusive a ordem crescente dos PWM e dos
 limites. `level_for_probability()` decide baixo, padrão ou alto;
@@ -34,8 +33,6 @@ maquete. Na futura integração, LEDs compartilhados por zonas deverão usar o
 maior nível de repouso solicitado. Se faltar horário válido para a previsão,
 o padrão proposto é o nível intermediário de 20/255.
 
-Antes de fixar os limites, compararemos várias combinações somente nos dias
-de validação e observaremos quantas janelas ativas ficariam em nível baixo e
-quanto tempo o repouso ficaria alto. Depois, o teste físico deve confirmar se
-10/20/50 são visualmente adequados. Ainda não há medição de economia, conforto
-ou segurança para atribuir uma vantagem operacional a esta política.
+Comparamos os limites baixos de 5%, 10% e 15% nos dias de validação; os
+resultados estão em [`dimming-validation.md`](dimming-validation.md). Nenhum
+limite foi aprovado automaticamente.

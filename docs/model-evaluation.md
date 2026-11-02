@@ -87,10 +87,10 @@ houvesse movimento, independentemente da previsão.
 O histórico de 30 minutos acrescentou um sinal pequeno nos cenários simulados.
 O ML teve Brier e RMSE ligeiramente menores no teste persistente, mas MAE e
 recall piores que `zona_hora`. **Ainda não há evidência suficiente para afirmar
-que o ML produz melhor iluminação ou economia de energia.** É preciso medir
-o brilho na maquete, definir quanto custa um período preventivamente claro
-e quanto custa uma atividade não antecipada. Só então poderemos transformar
-probabilidade em níveis de repouso e escolher limites. Um alerta que termina
+que o ML produz melhor iluminação ou economia de energia.** Os níveis de
+repouso PWM 10/20/50 já foram escolhidos para a maquete. Falta decidir os
+limites de probabilidade e avaliar o efeito de períodos preventivamente
+claros e de atividade não antecipada. Um alerta que termina
 vazio não significa que a probabilidade estava “errada”: eventos incertos
 podem deixar de ocorrer. Na avaliação, porém, ele conta como alerta sem
 atividade e teria custo de energia se elevasse o brilho.

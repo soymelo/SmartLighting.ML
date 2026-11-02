@@ -50,5 +50,6 @@ durante o teste.
 - Executar o modelo localmente, definir um brilho padrão seguro quando faltar
   horário ou histórico e preservar a prioridade do sensor sobre a previsão.
 
-Os níveis de PWM e a forma exata do comando serão decididos depois dos testes
-do modelo e da observação visual dos LEDs na maquete.
+Os níveis de repouso escolhidos para a maquete são PWM 10/20/50; os limites
+de probabilidade e a forma exata do comando de demonstração ainda serão
+definidos.

@@ -128,11 +128,11 @@ na avaliação, não o comportamento esperado do modelo futuro. Além do erro de
 contagem, precisamos medir se o controle escolhe brilho suficiente quando há
 atividade e qual consumo estimado resulta de suas decisões.
 
-## Revisão antes do treinamento
+## Decisões metodológicas
 
 1. Manter a origem sintética visível no CSV, nos metadados e nos resultados.
-2. Escolher e registrar os níveis de PWM após observar a maquete; brilho
-   percebido e fração de PWM não são a mesma medida.
+2. Usar os níveis PWM 10/20/50 definidos para a maquete e avaliar
+   separadamente os limites de probabilidade que escolhem cada nível.
 3. Comparar a previsão com referências simples, incluindo zero constante e
    uma regra baseada na hora, antes de afirmar vantagem do ML.
 4. Comparar o cenário original com `persistent_activity` para avaliar se as
