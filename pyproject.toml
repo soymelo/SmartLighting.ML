@@ -18,6 +18,7 @@ smartlighting-dimming-policy = "smartlighting_ml.dimming_policy:main"
 smartlighting-evaluate-dimming = "smartlighting_ml.evaluate_dimming:main"
 smartlighting-topology = "smartlighting_ml.topology:main"
 smartlighting-zone-windows = "smartlighting_ml.zone_windows:main"
+smartlighting-evaluate-luminaires = "smartlighting_ml.evaluate_luminaires:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -205,8 +205,8 @@ $env:PYTHONPATH = "src"
 
 Nesse exemplo, o LED `L04` recebe `50/255` porque está ligado a Z02, Z03 e
 Z04, que pediram 10, 20 e 50. O comando exige um PWM para cada zona; uma zona
-ausente ou desconhecida é rejeitada. Este cálculo é a base para o próximo
-relatório por LED e ainda não foi integrado ao firmware.
+ausente ou desconhecida é rejeitada. O mesmo cálculo é usado no relatório por
+LED; ainda não foi integrado ao firmware.
 
 Para preparar esse relatório, `zone_windows.py` lê o CSV de decisões por zona
 e reúne as seis zonas do mesmo horário e do mesmo par de limites. Ele rejeita
@@ -221,7 +221,24 @@ $env:PYTHONPATH = "src"
 
 Cada cenário deve apresentar 672 horários de 15 minutos, três candidatos e
 2.016 grupos de seis zonas. Esse comando apenas lê e verifica os dados; não
-cria ainda o CSV por LED nem altera o ML treinado.
+altera o ML treinado.
+
+Para aplicar o maior pedido de cada zona aos dez LEDs da maquete e criar o
+relatório dos sete dias de validação:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.evaluate_luminaires --input-dir data/evaluated/development --output-dir data/evaluated/development
+.\.venv\Scripts\python.exe -m smartlighting_ml.evaluate_luminaires --input-dir data/evaluated/persistent_activity --output-dir data/evaluated/persistent_activity
+```
+
+Cada diretório recebe `luminaire_decisions.csv`, com uma linha por candidato,
+horário e LED, e `luminaire_summary.json`, com as contagens gerais e por LED.
+O campo `observed_any_associated_activation` indica se houve movimento em
+alguma zona associada ao LED durante os 15 minutos previstos; é conhecido
+somente na avaliação histórica. Os arquivos são recriáveis e ignorados pelo
+Git. A metodologia e os resultados estão em
+[`docs/luminaire-validation.md`](docs/luminaire-validation.md).
 
 ## Testar
 
@@ -235,12 +252,12 @@ política de brilho e os vínculos entre zonas e LEDs.
 
 ## Próximas etapas
 
-1. Avaliar o maior nível solicitado às luminárias compartilhadas, por janela
-   de validação, e então decidir os limites de probabilidade. A média de PWM
-   por zona não mede energia dos LEDs.
-2. Fazer a avaliação final com o cenário `holdout` sem usá-lo para ajustes.
-3. Converter o cálculo do modelo para C++ e validar igualdade com Python.
-4. Integrar o modelo ao firmware e testar a maquete com a API desligada.
+1. Examinar os resultados por LED e escolher os limites de probabilidade,
+   explicitando o compromisso entre repouso baixo e janelas com movimento.
+2. Definir o comportamento para zonas novas que o modelo ainda não conhece.
+3. Fazer a avaliação final com o cenário `holdout` sem usá-lo para ajustes.
+4. Converter o cálculo do modelo para C++ e validar igualdade com Python.
+5. Integrar o modelo ao firmware e testar a maquete com a API desligada.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.
