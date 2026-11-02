@@ -66,3 +66,9 @@ Os comandos no README criam, em `data/evaluated/development/` e
 Esses arquivos ficam ignorados pelo Git, mas podem ser reproduzidos. O JSON
 `config/dimming_policy.json` continua com o limite baixo provisório de 10% e
 não foi alterado por esta avaliação.
+
+Para a próxima análise por LED, `zone_windows.py` reúne as seis decisões do
+mesmo horário e limite em um grupo completo. A leitura confere que há os mesmos
+horários em todos os candidatos e que mudar o limite não alterou a previsão
+nem a resposta histórica. O cálculo do PWM final por LED usará esses grupos
+na etapa seguinte.

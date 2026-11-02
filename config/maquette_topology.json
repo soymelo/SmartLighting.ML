@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "luminaires": [
+    {"luminaire_id": "L01", "device": "A", "slot": 1, "zone_ids": ["Z01", "Z06"]},
+    {"luminaire_id": "L02", "device": "A", "slot": 2, "zone_ids": ["Z01", "Z02"]},
+    {"luminaire_id": "L03", "device": "A", "slot": 3, "zone_ids": ["Z02", "Z03"]},
+    {"luminaire_id": "L04", "device": "A", "slot": 4, "zone_ids": ["Z02", "Z03", "Z04"]},
+    {"luminaire_id": "L05", "device": "A", "slot": 5, "zone_ids": ["Z03", "Z04"]},
+    {"luminaire_id": "L06", "device": "B", "slot": 1, "zone_ids": ["Z03", "Z04", "Z05"]},
+    {"luminaire_id": "L07", "device": "B", "slot": 2, "zone_ids": ["Z04", "Z05"]},
+    {"luminaire_id": "L08", "device": "B", "slot": 3, "zone_ids": ["Z05", "Z06"]},
+    {"luminaire_id": "L09", "device": "B", "slot": 4, "zone_ids": ["Z01", "Z05", "Z06"]},
+    {"luminaire_id": "L10", "device": "B", "slot": 5, "zone_ids": ["Z01", "Z06"]}
+  ]
+}

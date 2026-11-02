@@ -3,6 +3,10 @@
 Esta tabela descreve a topologia cadastrada no banco de dados da
 SmartLighting.Api.
 
+O mesmo mapa está em [`config/maquette_topology.json`](../config/maquette_topology.json)
+para os cálculos do projeto ML. `L01`–`L10` identificam os LEDs 1–10 deste
+documento; o arquivo registra também a placa e o slot de cada LED.
+
 Os nomes `S01`–`S06` e `Z01`–`Z06` são identificadores neutros dos cenários
 simulados. Correspondem aos nomes **Sensor 1**–**Sensor 6** e **Zone 1**–**Zone 6**
 da maquete, mas não são os GUIDs da API. Os GUIDs não são entradas do modelo.

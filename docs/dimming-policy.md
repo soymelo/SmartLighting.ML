@@ -20,6 +20,9 @@ diferentes. PWM não mede diretamente consumo elétrico.
 limites. `level_for_probability()` decide baixo, padrão ou alto;
 `pwm_for_probability()` devolve o número correspondente. Uma probabilidade
 inválida é rejeitada. O módulo não consulta a API nem altera o firmware.
+Depois de escolher o PWM por zona, `rest_pwm_by_luminaire()` aplica o maior
+pedido aos LEDs que pertencem a várias zonas, usando o mapa da maquete em
+`config/maquette_topology.json`.
 
 Exemplo: se `PoissonModel.predict()` devolver chance 0,18, a política escolhe
 `standard`, PWM 20/255. Se devolver 0,28, escolhe `high`, PWM 50/255.

@@ -188,6 +188,41 @@ resumo conta quantas janelas ficaram em cada nível e quantas tiveram movimento.
 Os arquivos são recriáveis e ignorados pelo Git. Resultados e limites da
 comparação estão em [`docs/dimming-validation.md`](docs/dimming-validation.md).
 
+## Combinar pedidos das zonas por LED
+
+[`config/maquette_topology.json`](config/maquette_topology.json) representa os
+dez LEDs, seus dispositivos, slots e vínculos com as seis zonas cadastradas na
+API. Usa IDs neutros (`L01`–`L10` e `Z01`–`Z06`), sem depender dos GUIDs do
+banco. `rest_pwm_by_luminaire()` escolhe o **maior PWM** pedido pelas zonas de
+cada LED. A função também aceita outra topologia no mesmo formato.
+
+Para conferir um conjunto de pedidos sem gerar CSV nem treinar o modelo:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.topology --zone-pwm Z01=10 --zone-pwm Z02=10 --zone-pwm Z03=20 --zone-pwm Z04=50 --zone-pwm Z05=10 --zone-pwm Z06=20
+```
+
+Nesse exemplo, o LED `L04` recebe `50/255` porque está ligado a Z02, Z03 e
+Z04, que pediram 10, 20 e 50. O comando exige um PWM para cada zona; uma zona
+ausente ou desconhecida é rejeitada. Este cálculo é a base para o próximo
+relatório por LED e ainda não foi integrado ao firmware.
+
+Para preparar esse relatório, `zone_windows.py` lê o CSV de decisões por zona
+e reúne as seis zonas do mesmo horário e do mesmo par de limites. Ele rejeita
+zonas ausentes ou repetidas, horários com lacunas e previsões que mudem entre
+os candidatos. Para conferir os grupos dos dois cenários:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.zone_windows --input data/evaluated/development/window_decisions.csv
+.\.venv\Scripts\python.exe -m smartlighting_ml.zone_windows --input data/evaluated/persistent_activity/window_decisions.csv
+```
+
+Cada cenário deve apresentar 672 horários de 15 minutos, três candidatos e
+2.016 grupos de seis zonas. Esse comando apenas lê e verifica os dados; não
+cria ainda o CSV por LED nem altera o ML treinado.
+
 ## Testar
 
 ```powershell
@@ -195,18 +230,17 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Os testes acima verificam o gerador, o preparador, a avaliação, o modelo e a
-política provisória de brilho.
+Os testes acima verificam o gerador, o preparador, a avaliação, o modelo, a
+política de brilho e os vínculos entre zonas e LEDs.
 
 ## Próximas etapas
 
-1. Conferir a topologia cadastrada na API antes da integração ao firmware.
-2. Decidir os limites de probabilidade com base na validação e avaliar o maior
-   nível solicitado às luminárias compartilhadas; a média de PWM por zona não
-   mede energia dos LEDs.
-3. Fazer a avaliação final com o cenário `holdout` sem usá-lo para ajustes.
-4. Converter o cálculo do modelo para C++ e validar igualdade com Python.
-5. Integrar o modelo ao firmware e testar a maquete com a API desligada.
+1. Avaliar o maior nível solicitado às luminárias compartilhadas, por janela
+   de validação, e então decidir os limites de probabilidade. A média de PWM
+   por zona não mede energia dos LEDs.
+2. Fazer a avaliação final com o cenário `holdout` sem usá-lo para ajustes.
+3. Converter o cálculo do modelo para C++ e validar igualdade com Python.
+4. Integrar o modelo ao firmware e testar a maquete com a API desligada.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.
