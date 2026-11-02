@@ -14,6 +14,7 @@ smartlighting-generate = "smartlighting_ml.generate:main"
 smartlighting-prepare = "smartlighting_ml.prepare:main"
 smartlighting-evaluate = "smartlighting_ml.evaluate:main"
 smartlighting-train = "smartlighting_ml.train:main"
+smartlighting-dimming-policy = "smartlighting_ml.dimming_policy:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "pwm_levels": {
+    "low": 10,
+    "standard": 20,
+    "high": 50
+  },
+  "probability_thresholds": {
+    "standard_at": 0.10,
+    "high_at": 0.25
+  }
+}

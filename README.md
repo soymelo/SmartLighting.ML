@@ -7,10 +7,11 @@ O movimento continua prioritário no firmware.
 
 **Estado atual:** geração reproduzível de dados simulados, preparação das
 janelas de 15 minutos, avaliação de regras simples e treinamento de uma
-regressão de Poisson em Python. Os parâmetros treinados são salvos em JSON,
-mas ainda não há implementação do cálculo em C++ nem controle por ML no ESP32.
-Os eventos gerados não
-são medições reais e não são inseridos no banco operacional da API.
+regressão de Poisson em Python. Uma política provisória em Python transforma
+a chance prevista em três níveis de repouso. Os parâmetros treinados são
+salvos em JSON, mas ainda não há implementação do cálculo em C++ nem controle
+por ML no ESP32. Os eventos gerados não são medições reais e não são inseridos
+no banco operacional da API.
 
 ## Por que simular
 
@@ -137,6 +138,31 @@ permanece explícita em Python para futura conversão ao ESP32. Os resultados e
 suas limitações estão em
 [`docs/model-evaluation.md`](docs/model-evaluation.md).
 
+## Escolher o brilho de repouso em Python
+
+Os valores provisórios ficam em [`config/dimming_policy.json`](config/dimming_policy.json):
+PWM baixo `10`, padrão `20` e alto `50`, numa escala de 0 a 255. A política
+usa a **chance de pelo menos uma ativação nos próximos 15 minutos**, produzida
+por `PoissonModel.predict()`: abaixo de 10% escolhe baixo; de 10% até menos
+de 25%, padrão; a partir de 25%, alto. Os dois limites foram escolhidos apenas
+para iniciar a implementação e **ainda não foram otimizados ou validados**.
+Para experimentar **uma probabilidade informada manualmente**, sem ler os CSVs
+nem percorrer as janelas:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.dimming_policy --probability 0.18
+```
+
+Esse exemplo retorna `20/255`. Ainda não há comando que liste a decisão para
+cada janela; isso será feito na avaliação da política. A previsão e a decisão
+ficam separadas:
+alterar os níveis ou os limites no JSON não exige treinar novamente o ML,
+mas exigirá repetir a futura avaliação do controle. O firmware ainda utiliza
+repouso fixo `20/255`, movimento com alvo `255/255` e o fade atual. O próximo
+passo é comparar limites e níveis nos dados de validação e testar os PWM na
+maquete. Veja [`docs/dimming-policy.md`](docs/dimming-policy.md).
+
 ## Testar
 
 ```powershell
@@ -144,13 +170,14 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Os testes acima verificam o gerador, o preparador, a avaliação e o modelo.
+Os testes acima verificam o gerador, o preparador, a avaliação, o modelo e a
+política provisória de brilho.
 
 ## Próximas etapas
 
 1. Conferir a topologia cadastrada na API antes da integração ao firmware.
-2. Medir o custo de alertas extras e de atividade não antecipada para escolher
-   o limite de brilho na maquete; os 20% atuais são apenas um corte de análise.
+2. Comparar faixas de probabilidade nos dias de validação, sem confundir PWM
+   com medição de energia; testar visualmente 10/20/50 na maquete.
 3. Fazer a avaliação final com o cenário `holdout` sem usá-lo para ajustes.
 4. Converter o cálculo do modelo para C++ e validar igualdade com Python.
 5. Integrar o modelo ao firmware e testar a maquete com a API desligada.
