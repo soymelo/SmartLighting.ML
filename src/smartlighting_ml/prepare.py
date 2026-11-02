@@ -18,7 +18,7 @@ from smartlighting_ml.generate import (
 WINDOW_COLUMNS = ("scenario_id", "zone_id", "window_start_utc", "activation_count")
 EXAMPLE_COLUMNS = (
     "scenario_id", "zone_id", "prediction_at_utc", "local_hour", "local_weekday",
-    "previous_15m_count", "previous_60m_count", "next_15m_count",
+    "previous_15m_count", "previous_30m_count", "previous_60m_count", "next_15m_count",
 )
 
 
@@ -98,6 +98,7 @@ def build_examples(windows: list[dict], scenario: dict) -> list[dict]:
                 "local_hour": local_time.hour,
                 "local_weekday": local_time.weekday(),
                 "previous_15m_count": rows[index - 1]["activation_count"],
+                "previous_30m_count": sum(row["activation_count"] for row in rows[index - 2:index]),
                 "previous_60m_count": sum(row["activation_count"] for row in rows[index - 4:index]),
                 "next_15m_count": rows[index]["activation_count"],
             })

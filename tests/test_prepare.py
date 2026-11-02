@@ -46,6 +46,7 @@ class PrepareTests(unittest.TestCase):
         first = next(row for row in build_examples(windows, self.scenario) if row["zone_id"] == "Z01")
         self.assertEqual(first["prediction_at_utc"], "2026-09-01T04:00:00Z")
         self.assertEqual(first["previous_15m_count"], 4)
+        self.assertEqual(first["previous_30m_count"], 7)
         self.assertEqual(first["previous_60m_count"], 10)
         self.assertEqual(first["next_15m_count"], 99)
         self.assertEqual(first["local_hour"], 1)

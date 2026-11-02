@@ -35,14 +35,21 @@ def load_examples(input_dir: Path) -> tuple[dict, list[dict]]:
                 raise ValueError("Horário da previsão deve conter fuso horário.")
             hour = int(row["local_hour"])
             previous = int(row["previous_15m_count"])
+            previous_30 = int(row["previous_30m_count"])
+            previous_60 = int(row["previous_60m_count"])
+            weekday = int(row["local_weekday"])
             target = int(row["next_15m_count"])
-            if not 0 <= hour <= 23 or previous < 0 or target < 0:
+            if (not 0 <= hour <= 23 or not 0 <= weekday <= 6 or previous < 0
+                    or previous_30 < previous or previous_60 < previous_30 or target < 0):
                 raise ValueError("Hora ou contagens inválidas nos exemplos.")
             examples.append({
                 "zone_id": row["zone_id"],
                 "prediction_at_utc": prediction_at.astimezone(UTC),
                 "local_hour": hour,
+                "local_weekday": weekday,
                 "previous_15m_count": previous,
+                "previous_30m_count": previous_30,
+                "previous_60m_count": previous_60,
                 "next_15m_count": target,
             })
     if len(examples) != metadata["example_count"]:
