@@ -38,7 +38,9 @@ Este arquivo descreve apenas o **repouso**. No firmware atual, o sensor ativo
 continua tendo alvo 255/255 e a subida e descida mantêm o fade testado na
 maquete. Na futura integração, LEDs compartilhados por zonas deverão usar o
 maior nível de repouso solicitado. Se faltar horário válido para a previsão,
-o padrão proposto é o nível intermediário de 20/255.
+o padrão proposto é o nível intermediário de 20/255. O mesmo padrão é usado
+em Python durante os primeiros 30 minutos de uma zona, até haver histórico
+suficiente para o modelo geral. Essa regra ainda não foi integrada ao firmware.
 
 Comparamos os limites baixos de 5%, 10% e 15% nos dias de validação e
 escolhemos 5% para a configuração. Os resultados por zona estão em

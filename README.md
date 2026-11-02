@@ -7,11 +7,12 @@ O movimento continua prioritário no firmware.
 
 **Estado atual:** geração reproduzível de dados simulados, preparação das
 janelas de 15 minutos, avaliação de regras simples e treinamento de uma
-regressão de Poisson em Python. Uma política configurada em Python transforma
-a chance prevista em três níveis de repouso. Os parâmetros treinados são
-salvos em JSON, mas ainda não há implementação do cálculo em C++ nem controle
-por ML no ESP32. Os eventos gerados não são medições reais e não são inseridos
-no banco operacional da API.
+regressão de Poisson em Python. Após comparar as variantes, adotamos um
+**modelo geral sem identidade de zona** para a futura integração. Uma política
+em Python transforma a chance prevista em três níveis de repouso e usa PWM 20
+enquanto faltar histórico. Os pesos são salvos em JSON, mas ainda não há
+implementação do cálculo em C++ nem controle por ML no ESP32. Os eventos
+gerados não são medições reais e não entram no banco operacional da API.
 
 ## Por que simular
 
@@ -115,10 +116,12 @@ Os resultados desta execução estão em
 O plano futuro de apresentação com o cálculo no ESP32 está em
 [`docs/firmware-demo-plan.md`](docs/firmware-demo-plan.md).
 
-## Treinar e comparar o ML
+## Experimento anterior: modelo por zona
 
-Depois de preparar os dois cenários, execute um treinamento independente para
-cada um. Não use o cenário `holdout` nesta etapa.
+Os comandos abaixo reproduzem o treinamento anterior, que usa a identidade
+da zona e avaliou os 14 dias finais. Eles permanecem para comparação histórica;
+o modelo escolhido para a próxima integração é o geral descrito adiante.
+Não use o cenário `holdout` nesta etapa.
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -137,6 +140,63 @@ para inspeção e uma futura conversão para o firmware. Ambos ficam em
 permanece explícita em Python para futura conversão ao ESP32. Os resultados e
 suas limitações estão em
 [`docs/model-evaluation.md`](docs/model-evaluation.md).
+
+## Comparar modelo por zona e modelo geral
+
+O modelo atual usa uma entrada para a identidade de cada zona treinada. O
+modelo geral omite essa entrada: usa hora, fim de semana e detecções recentes,
+e pode receber uma zona inédita. Para comparar os dois sem alterar os pesos
+salvos em `models/`, execute após preparar os CSVs:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.compare_models --input-dir data/processed/development --output data/compared/development.json
+.\.venv\Scripts\python.exe -m smartlighting_ml.compare_models --input-dir data/processed/persistent_activity --output data/compared/persistent_activity.json
+```
+
+O comando treina versões independentes com os primeiros 21 dias, sempre com
+30 minutos de histórico, e compara as previsões e o PWM 10/20/50 nos sete
+dias seguintes. Também repete o treino seis vezes, retirando uma zona por
+vez: mede como o modelo geral prevê a zona que não viu no treino. **Não usa**
+os 14 dias finais nem o cenário `holdout`. Os JSONs em `data/compared/` são
+recriáveis e ignorados pelo Git. Resultados e limites estão em
+[`docs/model-general-comparison.md`](docs/model-general-comparison.md).
+
+## Treinar e experimentar o modelo geral escolhido
+
+Usando os mesmos exemplos preparados, ajuste os pesos gerais com os primeiros
+28 dias. O comando registra também a métrica dos sete dias de validação,
+calculada com um ajuste separado dos primeiros 21 dias. **Não consulta** os
+14 dias finais nem `holdout`:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.train_general --input-dir data/processed/development --output-dir models/general/development
+.\.venv\Scripts\python.exe -m smartlighting_ml.train_general --input-dir data/processed/persistent_activity --output-dir models/general/persistent_activity
+```
+
+Cada diretório recebe `model.json` com os pesos gerais e `report.json` com a
+origem e a validação. Os IDs das zonas de treino são registrados apenas como
+proveniência: **não são entradas do modelo geral**. Esses arquivos são
+recriáveis e ignorados pelo Git. O modelo de `persistent_activity` é o
+candidato para a demonstração de episódios movimentados; a escolha do
+artefato a gravar no firmware será confirmada antes da conversão para C++.
+
+Para observar a zona inédita `Z_NOVA` sem histórico, e depois de 30 minutos
+de histórico, usando o modelo exportado:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --model models/general/persistent_activity/model.json --zone-id Z_NOVA --history-minutes-available 0
+.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --model models/general/persistent_activity/model.json --zone-id Z_NOVA --history-minutes-available 30 --hour 3 --weekday 0 --previous-30m-count 0
+.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --model models/general/persistent_activity/model.json --zone-id Z_NOVA --history-minutes-available 30 --hour 19 --weekday 0 --previous-30m-count 0
+```
+
+No primeiro caso, o repouso é PWM 20 por falta de histórico. Nos dois
+seguintes, a decisão vem do modelo geral e da política 5%/25%. O horário é
+local; dia da semana vai de 0 (segunda) a 6 (domingo). `Z_NOVA` não constava
+do treino. Este é um teste em Python: a contagem das janelas e essa regra de
+início ainda precisam ser implementadas no firmware.
 
 ## Escolher o brilho de repouso em Python
 
@@ -255,7 +315,7 @@ política de brilho e os vínculos entre zonas e LEDs.
 
 ## Próximas etapas
 
-1. Definir o comportamento para zonas novas que o modelo ainda não conhece.
+1. Conferir o artefato geral e a política escolhida antes da conversão para C++.
 2. Fazer a avaliação final da política escolhida com o cenário `holdout`, sem
    usá-lo para reajustar os limites.
 3. Converter o cálculo do modelo para C++ e validar igualdade com Python.

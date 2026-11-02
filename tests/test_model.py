@@ -1,9 +1,14 @@
 import math
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from sklearn.linear_model import PoissonRegressor
 
-from smartlighting_ml.model import PoissonModel, fit_poisson
+from smartlighting_ml.model import PoissonModel, fit_poisson, load_model
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class ModelTests(unittest.TestCase):
@@ -45,3 +50,24 @@ class ModelTests(unittest.TestCase):
         model = PoissonModel(["Z01"], (15,), [0.0] * 28)
         with self.assertRaisesRegex(ValueError, "Zona desconhecida"):
             model.predict({"zone_id": "Z02", "local_hour": 19, "local_weekday": 0, "previous_15m_count": 1})
+
+    def test_general_model_accepts_unseen_zone_without_zone_weight(self) -> None:
+        rows = [
+            {"zone_id": zone, "local_hour": 19, "local_weekday": day % 7,
+             "previous_30m_count": recent, "next_15m_count": target}
+            for day in range(30)
+            for zone in ("Z01", "Z02")
+            for recent, target in ((0, 0), (2, 1))
+        ]
+        model = fit_poisson(rows, (30,), use_zone=False)
+        known = dict(rows[0], zone_id="Z01")
+        new = dict(known, zone_id="Z99")
+        self.assertEqual(model.predict(known), model.predict(new))
+        self.assertFalse(model.as_dict()["zone_feature_enabled"])
+        self.assertFalse(any(name.startswith("zone_") for name in model.as_dict()["feature_order"]))
+        self.assertEqual(len(model.as_dict()["feature_order"]), len(model.weights))
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            path = Path(directory) / "model.json"
+            path.write_text(json.dumps(model.as_dict()), encoding="utf-8")
+            loaded = load_model(path)
+            self.assertEqual(loaded.predict(new), model.predict(new))
