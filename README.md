@@ -42,9 +42,11 @@ moradores. A hora local simulada usa deslocamento fixo UTC-03:00.
 ## Gerar os dados
 
 Requer Python 3.11 ou superior. O ambiente `.venv` do projeto usa Python 3.13.
-Na raiz de `SmartLighting.ML`, confira o interpretador e execute:
+Na raiz de `SmartLighting.ML`, instale a dependência de ML no ambiente virtual,
+confira o interpretador e execute:
 
 ```powershell
+.\.venv\Scripts\python.exe -m pip install scikit-learn==1.9.1
 .\.venv\Scripts\python.exe --version
 $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m smartlighting_ml.generate --scenario scenarios/development.json --start-local 2026-08-01 --days 42 --seed 42 --output-dir data/generated/development
@@ -130,8 +132,9 @@ ajusta novamente o modelo com os primeiros 28 dias. A hora, a zona e se é fim
 de semana entram em todas as alternativas. Os últimos 14 dias não escolhem
 parâmetros. `report.json` guarda as métricas; `model.json` guarda os pesos
 para inspeção e uma futura conversão para o firmware. Ambos ficam em
-`models/`, ignorado pelo Git. A implementação usa somente a biblioteca padrão
-do Python. Os resultados e suas limitações estão em
+`models/`, ignorado pelo Git. O treino usa `scikit-learn`; a fórmula de previsão
+permanece explícita em Python para futura conversão ao ESP32. Os resultados e
+suas limitações estão em
 [`docs/model-evaluation.md`](docs/model-evaluation.md).
 
 ## Testar

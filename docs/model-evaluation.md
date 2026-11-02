@@ -1,4 +1,4 @@
-# Primeiro treinamento de regressão
+# Treinamento de regressão
 
 Este experimento usa **somente dados sintéticos**, com cenários e sementes
 declarados. Não mede fluxo de uma rua real. Os eventos começaram em 2026-08-01
@@ -27,8 +27,13 @@ Exemplo: média 0,4 significa uma expectativa estatística de 0,4 ativação, n�
 que ocorrerá uma fração de passagem. A chance derivada de haver pelo menos uma
 ativação é `1 - exp(-média)`. Esta conversão assume que uma distribuição de
 Poisson descreve a contagem; episódios reais podem violar essa suposição.
-O treinamento usa uma penalidade pequena para evitar pesos extremos e é
-determinístico. Os pesos salvos ainda não foram executados no ESP32.
+O treinamento usa `scikit-learn==1.9.1` (`PoissonRegressor`) e uma penalidade
+pequena para evitar pesos extremos. A versão inicial deste experimento usava
+um otimizador Adam escrito no projeto; o ajuste foi substituído pela
+biblioteca, mantendo as entradas, a divisão dos dias e a fórmula de previsão.
+Os pesos salvos ainda não foram executados no ESP32. O JSON registra a versão
+da biblioteca e a ordem exata das entradas, necessárias para reproduzir a
+previsão em C++.
 
 Exemplo com o modelo ajustado para `persistent_activity`: na zona simulada
 Z02, às 21h de um dia útil, zero ativações nos 30 minutos anteriores produzem
@@ -42,7 +47,7 @@ pois a regra de brilho não foi definida nem integrada ao firmware.
 
 | Cenário | 15 min | 30 min | 60 min | 15+30+60 min | Escolhido |
 | --- | ---: | ---: | ---: | ---: | --- |
-| Desenvolvimento, Brier | 0,10975 | **0,10964** | 0,10967 | 0,10966 | 30 min |
+| Desenvolvimento, Brier | 0,10975 | **0,10965** | 0,10967 | 0,10966 | 30 min |
 | Atividade persistente, Brier | 0,10910 | **0,10888** | 0,10903 | 0,10908 | 30 min |
 
 A diferença é pequena. Esses números indicam que 30 minutos foi a melhor das
@@ -95,3 +100,16 @@ Os arquivos reproduzíveis estão em `models/development/` e
 validação e do teste; `model.json` contém os pesos ajustados. Os diretórios
 `models/` e `data/` são ignorados pelo Git porque podem ser recriados pelos
 comandos do README.
+
+## Comparação com o otimizador manual anterior
+
+Repetimos os dois treinos com os **mesmos CSVs**, períodos e candidatos. Os
+dois métodos escolheram 30 minutos de histórico. No teste final, o Brier de
+`development` foi 0,102214396 com Adam manual e 0,102214397 com
+scikit-learn. No cenário persistente, foi 0,109297637 nos dois métodos quando
+arredondado a nove casas decimais. Recall, precisão e proporção de alertas
+ficaram iguais nas duas execuções. As pequenas diferenças numéricas decorrem
+do algoritmo de ajuste dos pesos; elas não mudam a conclusão do experimento.
+Os números antigos foram preservados localmente em `models/manual/`, pasta
+ignorada pelo Git. O código do otimizador manual continua recuperável no
+commit anterior.

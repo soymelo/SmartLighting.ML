@@ -1,6 +1,8 @@
 import math
 import unittest
 
+from sklearn.linear_model import PoissonRegressor
+
 from smartlighting_ml.model import PoissonModel, fit_poisson
 
 
@@ -25,6 +27,19 @@ class ModelTests(unittest.TestCase):
         busy = dict(rows[0], previous_15m_count=3)
         self.assertGreater(model.predict(busy)[0], model.predict(quiet)[0])
         self.assertGreater(model.predict(busy)[1], model.predict(quiet)[1])
+
+        # Confere que a fórmula exportável devolve o mesmo valor que a biblioteca.
+        matrix = []
+        for row in rows:
+            values = [0.0] * (len(model.weights) - 1)
+            for index, value in model.features(row):
+                if index:
+                    values[index - 1] = value
+            matrix.append(values)
+        reference = PoissonRegressor(alpha=0.001, max_iter=1000, tol=1e-8)
+        reference.fit(matrix, [row["next_15m_count"] for row in rows])
+        self.assertAlmostEqual(model.predict(quiet)[0], reference.predict([matrix[0]])[0], places=9)
+        self.assertEqual(len(model.as_dict()["feature_order"]), len(model.weights))
 
     def test_unknown_zone_is_rejected(self) -> None:
         model = PoissonModel(["Z01"], (15,), [0.0] * 28)

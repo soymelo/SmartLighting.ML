@@ -7,6 +7,7 @@ name = "smartlighting-ml"
 version = "0.1.0"
 description = "Geracao, preparacao e avaliacao de dados para dimerizacao adaptativa da maquete SmartLighting"
 requires-python = ">=3.11"
+dependencies = ["scikit-learn==1.9.1"]
 
 [project.scripts]
 smartlighting-generate = "smartlighting_ml.generate:main"
