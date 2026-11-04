@@ -23,6 +23,7 @@ smartlighting-zone-rest = "smartlighting_ml.zone_rest:main"
 smartlighting-compare-models = "smartlighting_ml.compare_models:main"
 smartlighting-export-firmware = "smartlighting_ml.export_firmware:main"
 smartlighting-evaluate-holdout = "smartlighting_ml.evaluate_holdout:main"
+smartlighting-export-cpp-weights = "smartlighting_ml.export_cpp_weights:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

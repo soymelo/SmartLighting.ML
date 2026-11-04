@@ -171,6 +171,18 @@ guarda oito entradas e seus resultados esperados em Python. Ambos são
 versionados. Ainda não executam no ESP32: serão usados para conferir se a
 futura implementação em C++ produz as mesmas probabilidades e decisões PWM.
 
+Para gerar o header de **dados** do firmware a partir do modelo escolhido:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.export_cpp_weights --output ..\SmartLighting.Firmware\src\Control\ActivityModelWeights.h
+```
+
+O header registra os 27 pesos, a ordem das entradas e o SHA-256 do JSON de
+origem. O comando valida o tipo de modelo, o cenário e os 30 minutos de
+histórico antes de escrever. Não executa treinamento nem faz o ESP32 prever:
+o cálculo em C++ e a integração ao controle serão etapas posteriores.
+
 Para experimentar uma decisão com os pesos exportados, consulte as opções do
 comando:
 
