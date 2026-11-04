@@ -141,10 +141,35 @@ Cada diretório recebe `model.json` com os pesos gerais e `report.json` com a
 origem e a validação. Os IDs das zonas de treino são registrados apenas como
 proveniência: **não são entradas do modelo geral**. Esses arquivos são
 recriáveis e ignorados pelo Git. O treino usa `scikit-learn`; a ordem dos pesos
-fica explícita no JSON para a futura conversão ao ESP32. O modelo de
-`persistent_activity` é o
-candidato para a demonstração de episódios movimentados; a escolha do
-artefato a gravar no firmware será confirmada antes da conversão para C++.
+fica explícita no JSON para a futura conversão ao ESP32.
+
+### Comparação cruzada e pesos escolhidos
+
+Com os dois cenários preparados, compare modelos treinados separadamente nos
+primeiros 21 dias sobre **as mesmas janelas** dos sete dias seguintes de cada
+cenário. Os pesos exportados com 28 dias não são usados nessa validação, pois
+já foram ajustados com esses sete dias. O comando não acessa os 14 dias finais
+nem o cenário `holdout`:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.compare_models
+```
+
+O relatório reproduzível fica em `data/evaluated/model_comparison.json`.
+Escolhemos os pesos gerais treinados em `persistent_activity`, conforme a
+análise em [`docs/model-selection.md`](docs/model-selection.md). Para congelar
+esses pesos e criar previsões de referência para a implementação em C++:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.export_firmware
+```
+
+`config/firmware_model.json` guarda os pesos escolhidos; `config/firmware_reference.json`
+guarda oito entradas e seus resultados esperados em Python. Ambos são
+versionados. Ainda não executam no ESP32: serão usados para conferir se a
+futura implementação em C++ produz as mesmas probabilidades e decisões PWM.
 
 Para experimentar uma decisão com os pesos exportados, consulte as opções do
 comando:
@@ -281,11 +306,12 @@ política de brilho e os vínculos entre zonas e LEDs.
 
 ## Próximas etapas
 
-1. Conferir o artefato geral e a política escolhida antes da conversão para C++.
-2. Fazer a avaliação final da política escolhida com o cenário `holdout`, sem
+1. Fazer a avaliação final dos pesos e da política escolhidos com o cenário
+   `holdout`, sem
    usá-lo para reajustar os limites.
-3. Converter o cálculo do modelo para C++ e validar igualdade com Python.
-4. Integrar o modelo ao firmware e testar a maquete com a API desligada.
+2. Converter o cálculo do modelo para C++ e conferir as oito referências em
+   `config/firmware_reference.json`.
+3. Integrar o modelo ao firmware e testar a maquete com a API desligada.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.
