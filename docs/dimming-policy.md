@@ -15,8 +15,10 @@ Os níveis PWM 10/20/50 foram aceitos para a maquete. Escolhemos os **limites
 de probabilidade** de 5% e 25% após comparar decisões nos dados sintéticos
 de validação. O corte baixo de 5% reduz as janelas ativas que começam em PWM
 10 em relação às alternativas de 10% e 15%. O corte alto de 25% foi mantido;
-não o comparamos com outras alternativas. A política ainda não foi avaliada
-no teste final reservado nem em circulação real. O percentual de probabilidade
+não o comparamos com outras alternativas. A política foi avaliada no `holdout`
+sintético após a escolha dos limites; os resultados estão em
+[`holdout-evaluation.md`](holdout-evaluation.md). Ainda não foi avaliada em
+circulação real. O percentual de probabilidade
 e o valor de PWM são grandezas diferentes. PWM não mede diretamente consumo
 elétrico.
 

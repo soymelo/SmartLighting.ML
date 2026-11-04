@@ -5,7 +5,8 @@ as decisões por zona descritas em [dimming-validation.md](dimming-validation.md
 Os dados são **sintéticos** e cobrem os sete dias de validação de 22 a 28 de
 agosto de 2026. Os 14 dias finais não foram usados nesta análise por LED,
 mas já foram consultados na avaliação anterior de regras de referência. O
-cenário `holdout` continua reservado. Como a validação já orientou escolhas
+cenário `holdout` ainda estava reservado nessa etapa; sua avaliação posterior
+está em [holdout-evaluation.md](holdout-evaluation.md). Como a validação já orientou escolhas
 anteriores, estes resultados são exploratórios.
 
 Para cada horário de 15 minutos e cada candidato de limite baixo, reunimos

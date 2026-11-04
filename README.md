@@ -23,9 +23,9 @@ de nomes neutros. A correspondência estrutural com a maquete, incluindo os
 [`docs/maquette-topology.md`](docs/maquette-topology.md). Esse mapa veio dos
 cadastros no banco de dados da SmartLighting.Api. As taxas de ativação e os
 multiplicadores horários ainda não foram medidos nem
-calibrados com uma fonte externa. O cenário `holdout` foi reservado para uma
-avaliação posterior e não deve ser usado para escolher características ou
-parâmetros do modelo. A origem e a justificativa de cada parâmetro estão em
+calibrados com uma fonte externa. O cenário `holdout` foi reservado para a
+avaliação final e não foi usado para escolher características ou parâmetros do
+modelo. A origem e a justificativa de cada parâmetro estão em
 [`docs/scenario-assumptions.md`](docs/scenario-assumptions.md).
 
 Os arquivos `sensor_events.csv` contêm somente os instantes em que houve
@@ -58,8 +58,8 @@ Cada diretório recebe `sensor_events.csv` e `metadata.json`. Os metadados
 registram a semente e a identificação dos parâmetros do cenário. Depois de
 alterar qualquer JSON, gere novamente seus eventos antes de preparar as
 janelas; o preparador rejeita dados gerados com outra versão do cenário.
-Os resultados são ignorados pelo Git porque podem ser recriados. Deixe o
-cenário `holdout` reservado até a etapa de avaliação final.
+Os resultados são ignorados pelo Git porque podem ser recriados. O `holdout`
+foi gerado com semente `20261104` após a escolha dos pesos e limites.
 
 Para gerar o cenário adicional de atividade persistente, execute separadamente:
 
@@ -81,8 +81,8 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m smartlighting_ml.prepare --scenario scenarios/development.json --input-dir data/generated/development --output-dir data/processed/development
 ```
 
-O mesmo comando aceita `holdout.json` e `data/generated/holdout`, quando esse
-cenário for gerado. A saída contém `windows.csv` (uma linha por zona e intervalo,
+O mesmo comando aceita `holdout.json` e `data/generated/holdout`. A saída contém
+`windows.csv` (uma linha por zona e intervalo,
 inclusive zeros), `examples.csv` (hora local, dia da semana, ativações nos
 15, 30 e 60 minutos anteriores e alvo dos próximos 15 minutos) e `metadata.json`.
 Cada exemplo começa depois de uma hora completa de histórico. As colunas
@@ -195,8 +195,8 @@ padrão `20` e alto `50`, numa escala de 0 a 255. A política
 usa a **chance de pelo menos uma ativação nos próximos 15 minutos**, produzida
 por `PoissonModel.predict()`: abaixo de 5% escolhe baixo; de 5% até menos
 de 25%, padrão; a partir de 25%, alto. Escolhemos esses limites após a análise
-exploratória dos sete dias de validação sintética. Eles ainda não foram
-avaliados no teste final reservado nem em circulação real.
+exploratória dos sete dias de validação sintética. Eles já foram avaliados no
+`holdout` sintético, mas não em circulação real.
 Para experimentar **uma probabilidade informada manualmente**, sem ler os CSVs
 nem percorrer as janelas:
 
@@ -304,14 +304,34 @@ $env:PYTHONPATH = "src"
 Os testes acima verificam o gerador, o preparador, a avaliação, o modelo, a
 política de brilho e os vínculos entre zonas e LEDs.
 
+## Avaliação final no cenário reservado
+
+Esta avaliação usa **somente** os pesos já escolhidos em
+`config/firmware_model.json` e a política já definida. Não treina novamente,
+não escolhe outros limites e não usa o resultado para modificar o modelo.
+Para reproduzir o conjunto e os relatórios locais:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.generate --scenario scenarios/holdout.json --start-local 2026-08-01 --days 42 --seed 20261104 --output-dir data/generated/holdout
+.\.venv\Scripts\python.exe -m smartlighting_ml.prepare --scenario scenarios/holdout.json --input-dir data/generated/holdout --output-dir data/processed/holdout
+.\.venv\Scripts\python.exe -m smartlighting_ml.evaluate_holdout
+```
+
+`data/evaluated/holdout/` recebe `window_decisions.csv` por zona,
+`luminaire_decisions.csv` por LED e `final_report.json` com as métricas,
+proveniência, semente e comparação com o alvo fixo PWM 20. Esses arquivos
+gerados são ignorados pelo Git; os resultados e limites da conclusão estão em
+[`docs/holdout-evaluation.md`](docs/holdout-evaluation.md). O preparador começa
+os exemplos após uma hora de histórico para manter as mesmas colunas dos
+outros cenários. Por isso são 24.168 janelas de zona avaliadas, e não 24.192.
+O firmware deverá usar PWM 20 enquanto faltar histórico suficiente.
+
 ## Próximas etapas
 
-1. Fazer a avaliação final dos pesos e da política escolhidos com o cenário
-   `holdout`, sem
-   usá-lo para reajustar os limites.
-2. Converter o cálculo do modelo para C++ e conferir as oito referências em
+1. Converter o cálculo do modelo para C++ e conferir as oito referências em
    `config/firmware_reference.json`.
-3. Integrar o modelo ao firmware e testar a maquete com a API desligada.
+2. Integrar o modelo ao firmware e testar a maquete com a API desligada.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.

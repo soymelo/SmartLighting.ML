@@ -22,6 +22,7 @@ smartlighting-evaluate-luminaires = "smartlighting_ml.evaluate_luminaires:main"
 smartlighting-zone-rest = "smartlighting_ml.zone_rest:main"
 smartlighting-compare-models = "smartlighting_ml.compare_models:main"
 smartlighting-export-firmware = "smartlighting_ml.export_firmware:main"
+smartlighting-evaluate-holdout = "smartlighting_ml.evaluate_holdout:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

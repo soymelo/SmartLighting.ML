@@ -67,9 +67,9 @@ gradual. Não há fonte que justifique cada valor decimal. No `holdout`, a manh�
 é relativamente mais forte, o pico noturno é menos concentrado às 19h e as
 taxas por sensor são diferentes. Isso permite verificar a sensibilidade do
 método a outra **hipótese simulada**, não sua generalização para dados reais.
-O `holdout` deve permanecer reservado até a avaliação final; não devemos
-ajustar modelo ou cenário de desenvolvimento para obter um resultado melhor
-nele.
+O `holdout` permaneceu reservado até a
+[`avaliação final`](holdout-evaluation.md). Não ajustamos o modelo ou o cenário
+de desenvolvimento para obter um resultado melhor nele.
 
 Por exemplo, em um dia útil sem variação diária, `S01` às 19h no cenário de
 desenvolvimento tem taxa média `0,80 × 2,50 = 2` ativações por hora, ou
