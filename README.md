@@ -178,10 +178,12 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m smartlighting_ml.export_cpp_weights --output ..\SmartLighting.Firmware\src\Control\ActivityModelWeights.h
 ```
 
-O header registra os 27 pesos, a ordem das entradas e o SHA-256 do JSON de
-origem. O comando valida o tipo de modelo, o cenário e os 30 minutos de
-histórico antes de escrever. Não executa treinamento nem faz o ESP32 prever:
-o cálculo em C++ e a integração ao controle serão etapas posteriores.
+O header registra os 27 pesos, a ordem das entradas, os níveis/limites da
+política e o SHA-256 dos dois JSONs de origem. O comando valida o tipo de
+modelo, o cenário e os 30 minutos de histórico antes de escrever. Não executa
+treinamento. O cálculo em C++ já existe no firmware, mas ainda não controla os
+LEDs. O README do projeto `SmartLighting.Firmware` mostra como
+compilar e comparar seus oito resultados com `config/firmware_reference.json`.
 
 Para experimentar uma decisão com os pesos exportados, consulte as opções do
 comando:
@@ -341,9 +343,10 @@ O firmware deverá usar PWM 20 enquanto faltar histórico suficiente.
 
 ## Próximas etapas
 
-1. Converter o cálculo do modelo para C++ e conferir as oito referências em
-   `config/firmware_reference.json`.
-2. Integrar o modelo ao firmware e testar a maquete com a API desligada.
+1. Integrar o cálculo C++ ao histórico de ativações por zona e ao controle do
+   repouso dos LEDs, preservando a prioridade imediata do sensor e o fade.
+2. Testar a maquete com a API desligada e comparar o comportamento observado
+   com a avaliação sintética.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.

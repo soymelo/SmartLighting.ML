@@ -15,9 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 class FirmwareExportTests(unittest.TestCase):
     def test_cpp_header_preserves_every_selected_weight(self) -> None:
         path = ROOT / "config/firmware_model.json"
+        policy_path = ROOT / "config/dimming_policy.json"
         model = load_model(path)
-        header = render_header(path)
-        self.assertEqual(header, render_header(path))
+        header = render_header(path, policy_path)
+        self.assertEqual(header, render_header(path, policy_path))
         exported = [
             float(line.strip().split(",", 1)[0])
             for line in header.splitlines() if line.startswith("    ")
@@ -26,6 +27,7 @@ class FirmwareExportTests(unittest.TestCase):
         self.assertEqual(len(exported), 27)
         self.assertIn("constexpr int HourStartIndex = 1;", header)
         self.assertIn("constexpr int Previous30mIndex = 26;", header)
+        self.assertIn("constexpr int StandardPwm = 20;", header)
 
         with tempfile.TemporaryDirectory(dir=ROOT) as directory:
             invalid = json.loads(path.read_text(encoding="utf-8"))
@@ -33,7 +35,7 @@ class FirmwareExportTests(unittest.TestCase):
             invalid_path = Path(directory) / "wrong_model.json"
             invalid_path.write_text(json.dumps(invalid), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "modelo geral"):
-                render_header(invalid_path)
+                render_header(invalid_path, policy_path)
 
     def test_reference_cases_match_selected_weights_and_policy(self) -> None:
         model = load_model(ROOT / "config/firmware_model.json")
