@@ -11,11 +11,11 @@ class ZoneRestTests(unittest.TestCase):
         weights = [0.0] * 27
         weights[0] = math.log(0.04)
         weights[-1] = 1.0
-        self.model = PoissonModel([], (30,), weights, use_zone=False)
+        self.model = PoissonModel((30,), weights)
         self.policy = DimmingPolicy(10, 20, 50, 0.05, 0.25)
-        self.row = {"zone_id": "Z_NOVA", "local_hour": 19, "local_weekday": 0, "previous_30m_count": 0}
+        self.row = {"zone_id": "Z01", "local_hour": 19, "local_weekday": 0, "previous_30m_count": 0}
 
-    def test_new_zone_starts_at_standard_then_uses_model(self) -> None:
+    def test_zone_starts_at_standard_then_uses_model(self) -> None:
         for minutes in (0, 15, 29):
             with self.subTest(minutes=minutes):
                 decision = decide_zone_rest(self.model, self.policy, None, minutes)

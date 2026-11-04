@@ -110,10 +110,11 @@ def write_luminaire_report(input_dir: Path, topology_path: Path, output_dir: Pat
     """Lê a validação por zona e grava decisões e resumo por LED."""
     source = json.loads((input_dir / "summary.json").read_text(encoding="utf-8"))
     if (source.get("source") != "synthetic" or source.get("scenario_id") == "holdout"
+            or source.get("model_scope") != "general_without_zone_identity"
             or source.get("validation_days") != 7
             or source.get("final_test_used") is not False
             or source.get("holdout_used") is not False):
-        raise ValueError("Use somente o relatório de validação; teste final e holdout estão reservados.")
+        raise ValueError("Use a validação do modelo geral; teste final e holdout estão reservados.")
     topology = load_topology(topology_path)
     windows = group_zone_decisions(
         load_zone_decisions(input_dir / "window_decisions.csv"), topology.zone_ids,
@@ -149,6 +150,7 @@ def write_luminaire_report(input_dir: Path, topology_path: Path, output_dir: Pat
         "scenario_id": source["scenario_id"],
         "source": source["source"],
         "scenario_sha256": source["scenario_sha256"],
+        "model_scope": source["model_scope"],
         "validation_start_local": source["validation_start_local"],
         "validation_end_local_exclusive": source["validation_end_local_exclusive"],
         "final_test_used": False,

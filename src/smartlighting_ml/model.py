@@ -1,4 +1,4 @@
-"""Treino com scikit-learn, com ou sem ajuste específico por zona.
+"""Regressão de Poisson geral para prever ativações nos próximos 15 minutos.
 
 O modelo prevê a média de ativações em 15 minutos. A chance de pelo menos
 uma ativação é calculada pela distribuição de Poisson: 1 - exp(-média).
@@ -19,29 +19,22 @@ HISTORY_COLUMNS = {
     30: "previous_30m_count",
     60: "previous_60m_count",
 }
+MODEL_TYPE = "poisson_regression_general_v1"
 
 
 @dataclass
 class PoissonModel:
-    zones: list[str]
     history_minutes: tuple[int, ...]
     weights: list[float]
-    use_zone: bool = True
 
     def features(self, row: dict) -> tuple[tuple[int, float], ...]:
-        """Transforma hora, zona e histórico em entradas do modelo."""
-        if self.use_zone and row["zone_id"] not in self.zones:
-            raise ValueError(f"Zona desconhecida: {row['zone_id']}")
-        zone_count = len(self.zones) if self.use_zone else 0
-        zone_feature = ((25 + self.zones.index(row["zone_id"]), 1.0),) if self.use_zone else ()
-        start_history = 1 + 24 + zone_count + 1
+        """Usa hora, fim de semana e histórico; o ID da zona não entra no modelo."""
         return (
             (0, 1.0),
             (1 + row["local_hour"], 1.0),
-            *zone_feature,
-            (25 + zone_count, float(row["local_weekday"] >= 5)),
+            (25, float(row["local_weekday"] >= 5)),
             *(
-                (start_history + index, math.log1p(row[HISTORY_COLUMNS[minutes]]))
+                (26 + index, math.log1p(row[HISTORY_COLUMNS[minutes]]))
                 for index, minutes in enumerate(self.history_minutes)
             ),
         )
@@ -55,16 +48,13 @@ class PoissonModel:
     def as_dict(self) -> dict:
         """Representação simples para inspecionar e exportar futuramente."""
         return {
-            "model_type": "poisson_regression_v2",
+            "model_type": MODEL_TYPE,
             "training_library": "scikit-learn",
             "training_library_version": sklearn.__version__,
-            "zones": self.zones,
-            "zone_feature_enabled": self.use_zone,
             "history_minutes": list(self.history_minutes),
             "feature_order": [
                 "intercept",
                 *(f"hour_{hour}" for hour in range(24)),
-                *(f"zone_{zone}" for zone in self.zones if self.use_zone),
                 "weekend",
                 *(f"log1p_previous_{minutes}m_count" for minutes in self.history_minutes),
             ],
@@ -73,17 +63,14 @@ class PoissonModel:
         }
 
 
-def fit_poisson(
-    rows: list[dict], history_minutes: tuple[int, ...], *, use_zone: bool = True,
-) -> PoissonModel:
-    """Ajusta a regressão de Poisson; sem zona, aceita IDs inéditos na previsão."""
+def fit_poisson(rows: list[dict], history_minutes: tuple[int, ...]) -> PoissonModel:
+    """Treina um modelo compartilhado por todas as zonas, inclusive futuras."""
     if not rows or not history_minutes or any(minutes not in HISTORY_COLUMNS for minutes in history_minutes):
         raise ValueError("Treino e histórico válidos são obrigatórios.")
     if len(set(history_minutes)) != len(history_minutes):
         raise ValueError("Históricos duplicados.")
-    zones = sorted({row["zone_id"] for row in rows}) if use_zone else []
-    size = 1 + 24 + len(zones) + 1 + len(history_minutes)
-    template = PoissonModel(zones, history_minutes, [0.0] * size, use_zone)
+    size = 1 + 24 + 1 + len(history_minutes)
+    template = PoissonModel(history_minutes, [0.0] * size)
     matrix = []
     for row in rows:
         values = [0.0] * (size - 1)
@@ -94,30 +81,25 @@ def fit_poisson(
     targets = [row["next_15m_count"] for row in rows]
     regressor = PoissonRegressor(alpha=0.001, max_iter=1000, tol=1e-8)
     regressor.fit(matrix, targets)
-    return PoissonModel(zones, history_minutes, [float(regressor.intercept_), *map(float, regressor.coef_)], use_zone)
+    return PoissonModel(history_minutes, [float(regressor.intercept_), *map(float, regressor.coef_)])
 
 
 def load_model(path: Path) -> PoissonModel:
-    """Reconstitui e confere os pesos exportados antes de fazer previsões."""
+    """Reconstitui o modelo geral e rejeita artefatos de outra estrutura."""
     data = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict) or data.get("model_type") != "poisson_regression_v2":
-        raise ValueError("Formato de modelo incompatível.")
-    zones = data.get("zones")
+    if not isinstance(data, dict) or data.get("model_type") != MODEL_TYPE:
+        raise ValueError("Formato de modelo geral incompatível.")
     history = data.get("history_minutes")
     weights = data.get("weights")
-    use_zone = data.get("zone_feature_enabled", True)
-    if (not isinstance(zones, list) or any(not isinstance(zone, str) or not zone for zone in zones)
-            or len(set(zones)) != len(zones) or type(use_zone) is not bool
-            or (use_zone and not zones) or (not use_zone and zones)
-            or not isinstance(history, list) or not history
+    if (not isinstance(history, list) or not history
             or any(type(minutes) is not int or minutes not in HISTORY_COLUMNS for minutes in history)
             or len(set(history)) != len(history)
             or not isinstance(weights, list)
             or any(isinstance(weight, bool) or not isinstance(weight, (int, float))
                    or not math.isfinite(weight) for weight in weights)):
         raise ValueError("Entradas ou pesos inválidos no modelo.")
-    model = PoissonModel(zones, tuple(history), [float(weight) for weight in weights], use_zone)
-    if (len(model.weights) != 1 + 24 + len(zones) + 1 + len(history)
+    model = PoissonModel(tuple(history), [float(weight) for weight in weights])
+    if (len(model.weights) != 1 + 24 + 1 + len(history)
             or data.get("feature_order") != model.as_dict()["feature_order"]):
         raise ValueError("Ordem ou quantidade de pesos incompatível com as entradas.")
     return model

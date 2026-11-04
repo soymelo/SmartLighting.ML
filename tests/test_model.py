@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class ModelTests(unittest.TestCase):
     def test_probability_and_nonnegative_count(self) -> None:
-        model = PoissonModel(["Z01"], (15,), [0.0] * 28)
+        model = PoissonModel((15,), [0.0] * 27)
         row = {"zone_id": "Z01", "local_hour": 19, "local_weekday": 0, "previous_15m_count": 0}
         mean, probability = model.predict(row)
         self.assertEqual(mean, 1.0)
@@ -46,12 +46,7 @@ class ModelTests(unittest.TestCase):
         self.assertAlmostEqual(model.predict(quiet)[0], reference.predict([matrix[0]])[0], places=9)
         self.assertEqual(len(model.as_dict()["feature_order"]), len(model.weights))
 
-    def test_unknown_zone_is_rejected(self) -> None:
-        model = PoissonModel(["Z01"], (15,), [0.0] * 28)
-        with self.assertRaisesRegex(ValueError, "Zona desconhecida"):
-            model.predict({"zone_id": "Z02", "local_hour": 19, "local_weekday": 0, "previous_15m_count": 1})
-
-    def test_general_model_accepts_unseen_zone_without_zone_weight(self) -> None:
+    def test_zone_id_does_not_change_prediction(self) -> None:
         rows = [
             {"zone_id": zone, "local_hour": 19, "local_weekday": day % 7,
              "previous_30m_count": recent, "next_15m_count": target}
@@ -59,11 +54,10 @@ class ModelTests(unittest.TestCase):
             for zone in ("Z01", "Z02")
             for recent, target in ((0, 0), (2, 1))
         ]
-        model = fit_poisson(rows, (30,), use_zone=False)
+        model = fit_poisson(rows, (30,))
         known = dict(rows[0], zone_id="Z01")
         new = dict(known, zone_id="Z99")
         self.assertEqual(model.predict(known), model.predict(new))
-        self.assertFalse(model.as_dict()["zone_feature_enabled"])
         self.assertFalse(any(name.startswith("zone_") for name in model.as_dict()["feature_order"]))
         self.assertEqual(len(model.as_dict()["feature_order"]), len(model.weights))
         with tempfile.TemporaryDirectory(dir=ROOT) as directory:

@@ -9,6 +9,5 @@ dist/
 data/generated/
 data/processed/
 data/evaluated/
-data/compared/
 models/
 .env

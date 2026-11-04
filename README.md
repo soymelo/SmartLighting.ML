@@ -116,12 +116,20 @@ Os resultados desta execução estão em
 O plano futuro de apresentação com o cálculo no ESP32 está em
 [`docs/firmware-demo-plan.md`](docs/firmware-demo-plan.md).
 
-## Experimento anterior: modelo por zona
+## Treinar o modelo geral
 
-Os comandos abaixo reproduzem o treinamento anterior, que usa a identidade
-da zona e avaliou os 14 dias finais. Eles permanecem para comparação histórica;
-o modelo escolhido para a próxima integração é o geral descrito adiante.
-Não use o cenário `holdout` nesta etapa.
+O modelo usa hora local, fim de semana e ativações dos últimos 30 minutos.
+Ele não usa a identidade da zona como entrada: uma zona nova pode receber
+previsões após reunir o histórico necessário. Escolhemos essa estrutura para
+permitir novas topologias sem retreinar a cada cadastro. Na validação
+sintética, sua precisão ficou próxima da alternativa com pesos por zona,
+com pequena perda aceita em troca dessa flexibilidade. Isso não comprova
+precisão em ruas reais.
+
+Usando os exemplos preparados, ajuste os pesos gerais com os primeiros 28
+dias. O comando registra também a métrica dos sete dias de validação,
+calculada com um ajuste separado dos primeiros 21 dias. **Não consulta** os
+14 dias finais nem o cenário `holdout`:
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -129,74 +137,30 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m smartlighting_ml.train --input-dir data/processed/persistent_activity --output-dir models/persistent_activity
 ```
 
-O programa usa 21 dias para ajustar modelos candidatos, 7 dias para escolher
-o histórico de 15, 30, 60 ou 15+30+60 minutos pelo menor Brier, e os 14 dias
-finais para comparar o escolhido com `zero` e `zona_hora`. Depois da escolha,
-ajusta novamente o modelo com os primeiros 28 dias. A hora, a zona e se é fim
-de semana entram em todas as alternativas. Os últimos 14 dias não escolhem
-parâmetros. `report.json` guarda as métricas; `model.json` guarda os pesos
-para inspeção e uma futura conversão para o firmware. Ambos ficam em
-`models/`, ignorado pelo Git. O treino usa `scikit-learn`; a fórmula de previsão
-permanece explícita em Python para futura conversão ao ESP32. Os resultados e
-suas limitações estão em
-[`docs/model-evaluation.md`](docs/model-evaluation.md).
-
-## Comparar modelo por zona e modelo geral
-
-O modelo atual usa uma entrada para a identidade de cada zona treinada. O
-modelo geral omite essa entrada: usa hora, fim de semana e detecções recentes,
-e pode receber uma zona inédita. Para comparar os dois sem alterar os pesos
-salvos em `models/`, execute após preparar os CSVs:
-
-```powershell
-$env:PYTHONPATH = "src"
-.\.venv\Scripts\python.exe -m smartlighting_ml.compare_models --input-dir data/processed/development --output data/compared/development.json
-.\.venv\Scripts\python.exe -m smartlighting_ml.compare_models --input-dir data/processed/persistent_activity --output data/compared/persistent_activity.json
-```
-
-O comando treina versões independentes com os primeiros 21 dias, sempre com
-30 minutos de histórico, e compara as previsões e o PWM 10/20/50 nos sete
-dias seguintes. Também repete o treino seis vezes, retirando uma zona por
-vez: mede como o modelo geral prevê a zona que não viu no treino. **Não usa**
-os 14 dias finais nem o cenário `holdout`. Os JSONs em `data/compared/` são
-recriáveis e ignorados pelo Git. Resultados e limites estão em
-[`docs/model-general-comparison.md`](docs/model-general-comparison.md).
-
-## Treinar e experimentar o modelo geral escolhido
-
-Usando os mesmos exemplos preparados, ajuste os pesos gerais com os primeiros
-28 dias. O comando registra também a métrica dos sete dias de validação,
-calculada com um ajuste separado dos primeiros 21 dias. **Não consulta** os
-14 dias finais nem `holdout`:
-
-```powershell
-$env:PYTHONPATH = "src"
-.\.venv\Scripts\python.exe -m smartlighting_ml.train_general --input-dir data/processed/development --output-dir models/general/development
-.\.venv\Scripts\python.exe -m smartlighting_ml.train_general --input-dir data/processed/persistent_activity --output-dir models/general/persistent_activity
-```
-
 Cada diretório recebe `model.json` com os pesos gerais e `report.json` com a
 origem e a validação. Os IDs das zonas de treino são registrados apenas como
 proveniência: **não são entradas do modelo geral**. Esses arquivos são
-recriáveis e ignorados pelo Git. O modelo de `persistent_activity` é o
+recriáveis e ignorados pelo Git. O treino usa `scikit-learn`; a ordem dos pesos
+fica explícita no JSON para a futura conversão ao ESP32. O modelo de
+`persistent_activity` é o
 candidato para a demonstração de episódios movimentados; a escolha do
 artefato a gravar no firmware será confirmada antes da conversão para C++.
 
-Para observar a zona inédita `Z_NOVA` sem histórico, e depois de 30 minutos
-de histórico, usando o modelo exportado:
+Para experimentar uma decisão com os pesos exportados, consulte as opções do
+comando:
 
 ```powershell
 $env:PYTHONPATH = "src"
-.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --model models/general/persistent_activity/model.json --zone-id Z_NOVA --history-minutes-available 0
-.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --model models/general/persistent_activity/model.json --zone-id Z_NOVA --history-minutes-available 30 --hour 3 --weekday 0 --previous-30m-count 0
-.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --model models/general/persistent_activity/model.json --zone-id Z_NOVA --history-minutes-available 30 --hour 19 --weekday 0 --previous-30m-count 0
+.\.venv\Scripts\python.exe -m smartlighting_ml.zone_rest --help
 ```
 
-No primeiro caso, o repouso é PWM 20 por falta de histórico. Nos dois
-seguintes, a decisão vem do modelo geral e da política 5%/25%. O horário é
-local; dia da semana vai de 0 (segunda) a 6 (domingo). `Z_NOVA` não constava
-do treino. Este é um teste em Python: a contagem das janelas e essa regra de
-início ainda precisam ser implementadas no firmware.
+O comando aceita qualquer ID de zona apenas para identificar a saída; o ID
+não entra no cálculo do modelo geral. Informe o caminho de `model.json` e
+quantos minutos de histórico estão disponíveis. Com menos de 30 minutos,
+retorna PWM 20; com histórico completo, informe também hora local, dia da
+semana (0 para segunda, 6 para domingo) e ativações dos últimos 30 minutos.
+Este é um teste em Python: a contagem das janelas e essa regra de início ainda
+precisam ser implementadas no firmware.
 
 ## Escolher o brilho de repouso em Python
 
@@ -248,8 +212,10 @@ zona, horário local, contagens anteriores, previsão, repouso escolhido e o
 resultado histórico dos 15 minutos seguintes. Essa última coluna serve apenas
 para avaliação; ela ainda não existiria no momento de uma previsão real. O
 resumo conta quantas janelas ficaram em cada nível e quantas tiveram movimento.
-Os arquivos são recriáveis e ignorados pelo Git. Resultados e limites da
-comparação estão em [`docs/dimming-validation.md`](docs/dimming-validation.md).
+Os arquivos são recriáveis e ignorados pelo Git. O resumo identifica o modelo
+geral que produziu as decisões; o relatório por LED rejeita resumos antigos
+sem essa identificação. Resultados e limites da comparação estão em
+[`docs/dimming-validation.md`](docs/dimming-validation.md).
 
 ## Combinar pedidos das zonas por LED
 

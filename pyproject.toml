@@ -19,8 +19,6 @@ smartlighting-evaluate-dimming = "smartlighting_ml.evaluate_dimming:main"
 smartlighting-topology = "smartlighting_ml.topology:main"
 smartlighting-zone-windows = "smartlighting_ml.zone_windows:main"
 smartlighting-evaluate-luminaires = "smartlighting_ml.evaluate_luminaires:main"
-smartlighting-compare-models = "smartlighting_ml.compare_models:main"
-smartlighting-train-general = "smartlighting_ml.train_general:main"
 smartlighting-zone-rest = "smartlighting_ml.zone_rest:main"
 
 [tool.setuptools.packages.find]

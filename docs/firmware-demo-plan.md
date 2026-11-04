@@ -24,7 +24,7 @@ demonstração e o modelo no ESP32 ainda não foram implementados.**
    passos de 15 minutos. O ESP32 receberá contagens da janela encerrada,
    executará localmente o modelo e mostrará a previsão e o novo brilho de
    repouso. Uma sequência inicial pode preencher o histórico necessário sem
-   exigir que a banca espere uma hora real.
+   exigir que a banca espere 30 minutos reais.
 3. Esperar terminar o acionamento imediato do sensor antes de observar o
    brilho de repouso. Como LEDs pertencem a várias zonas, mostrar também a
    previsão por zona e aplicar o maior nível solicitado ao LED compartilhado.
@@ -50,6 +50,6 @@ durante o teste.
 - Executar o modelo localmente, definir um brilho padrão seguro quando faltar
   horário ou histórico e preservar a prioridade do sensor sobre a previsão.
 
-Os níveis de repouso escolhidos para a maquete são PWM 10/20/50; os limites
-de probabilidade e a forma exata do comando de demonstração ainda serão
-definidos.
+Os níveis de repouso escolhidos para a maquete são PWM 10/20/50, com limite
+baixo de 5% e alto de 25% de chance prevista. A forma exata do comando de
+demonstração ainda será definida.

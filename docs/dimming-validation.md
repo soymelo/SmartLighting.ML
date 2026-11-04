@@ -3,8 +3,8 @@
 Este relatório mostra **decisões simuladas por zona e janela**, não o brilho
 executado no ESP32. Usamos os CSVs sintéticos existentes, com início em
 2026-08-01 e semente 42. Para cada cenário, ajustamos a regressão de Poisson
-com os dias locais 1–21 e histórico de 30 minutos, selecionado na avaliação
-anterior. Aplicamos os três limites aos mesmos 7 dias de validação, de
+geral com os dias locais 1–21 e histórico de 30 minutos. Aplicamos os três
+limites aos mesmos 7 dias de validação, de
 2026-08-22 a 2026-08-28. Os 14 dias finais e `holdout` não foram usados nesta
 comparação. Como esses 7 dias já serviram para escolher o histórico de 30
 minutos, os números aqui são exploratórios, não uma prova independente.
@@ -22,26 +22,26 @@ para a previsão, não 5%, 10% ou 15% de luminosidade.
 
 | Cenário | PWM 10 se chance prevista < | Janelas em PWM 10 | Janelas em PWM 20 | Janelas em PWM 50 | Janelas ativas que ficaram em PWM 10 | Média de PWM por zona-janela |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Desenvolvimento | 5% | 662 | 3.080 | 290 | 17 de 542 (3,1%) | 20,52 |
-| Desenvolvimento | 10% | 1.879 | 1.863 | 290 | 123 de 542 (22,7%) | 17,50 |
-| Desenvolvimento | 15% | 2.887 | 855 | 290 | 273 de 542 (50,4%) | 15,00 |
-| Atividade persistente | 5% | 660 | 2.872 | 500 | 15 de 544 (2,8%) | 22,08 |
-| Atividade persistente | 10% | 1.272 | 2.260 | 500 | 52 de 544 (9,6%) | 20,57 |
-| Atividade persistente | 15% | 2.589 | 943 | 500 | 219 de 544 (40,3%) | 17,30 |
+| Desenvolvimento | 5% | 592 | 3.100 | 340 | 15 de 542 (2,8%) | 21,06 |
+| Desenvolvimento | 10% | 1.780 | 1.912 | 340 | 118 de 542 (21,8%) | 18,12 |
+| Desenvolvimento | 15% | 2.785 | 907 | 340 | 255 de 542 (47,0%) | 15,62 |
+| Atividade persistente | 5% | 690 | 2.812 | 530 | 18 de 544 (3,3%) | 22,23 |
+| Atividade persistente | 10% | 1.143 | 2.359 | 530 | 37 de 544 (6,8%) | 21,11 |
+| Atividade persistente | 15% | 2.602 | 900 | 530 | 224 de 544 (41,2%) | 17,49 |
 
 “Janelas ativas que ficaram em PWM 10” responde: entre todas as janelas em
 que **houve pelo menos uma ativação**, quantas teriam começado no repouso
-baixo. Por exemplo, no cenário persistente com limite de 10%, foram 52 das
-544 janelas ativas. Dentro das 1.272 janelas colocadas em PWM 10, 52 tiveram
-movimento, cerca de 4,1%. O sensor ainda elevaria a luz quando detectasse a
+baixo. Por exemplo, no cenário persistente com limite escolhido de 5%, foram
+18 das 544 janelas ativas. Dentro das 690 janelas colocadas em PWM 10, 18
+tiveram movimento, cerca de 2,6%. O sensor ainda elevaria a luz quando detectasse a
 passagem; o valor baixo se refere apenas ao repouso anterior.
 
 A média de PWM é somente a média aritmética das decisões **por zona-janela**.
 Não é consumo em watts ou economia: algumas luminárias pertencem a mais de
 uma zona, o firmware usa fade e a resposta imediata do sensor vai a 255.
 Por isso, uma média menor que 20 não prova economia elétrica. Com limite de
-10%, o cenário persistente até tem média 20,57, acima do padrão fixo 20,
-porque as 500 janelas em PWM 50 compensam parte do tempo em PWM 10.
+5%, o cenário persistente tem média 22,23, acima do padrão fixo 20,
+porque as 530 janelas em PWM 50 compensam parte do tempo em PWM 10.
 
 O limite de 15% aumenta bastante o número de janelas em repouso baixo, mas
 também coloca nele mais janelas com movimento. O de 5% evita muitas dessas

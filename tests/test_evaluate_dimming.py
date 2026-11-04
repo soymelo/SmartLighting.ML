@@ -8,10 +8,10 @@ from smartlighting_ml.model import PoissonModel
 
 class DimmingEvaluationTests(unittest.TestCase):
     def test_same_predictions_are_compared_across_thresholds(self) -> None:
-        weights = [0.0] * 28
+        weights = [0.0] * 27
         weights[0] = -3.22
         weights[-1] = 1.0
-        model = PoissonModel(["Z01"], (30,), weights)
+        model = PoissonModel((30,), weights)
         start = datetime(2026, 8, 22, tzinfo=UTC)
         rows = [
             {
@@ -42,7 +42,7 @@ class DimmingEvaluationTests(unittest.TestCase):
 
     def test_rejects_invalid_thresholds(self) -> None:
         policy = DimmingPolicy(10, 20, 50, 0.10, 0.25)
-        model = PoissonModel(["Z01"], (30,), [0.0] * 28)
+        model = PoissonModel((30,), [0.0] * 27)
         row = {
             "zone_id": "Z01", "prediction_at_utc": datetime(2026, 8, 22, tzinfo=UTC),
             "local_hour": 21, "local_weekday": 5,

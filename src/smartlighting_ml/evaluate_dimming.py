@@ -101,9 +101,15 @@ def write_validation_report(
     if metadata["scenario_id"] == "holdout" or metadata["days"] != 42:
         raise ValueError("Use apenas um cenário de desenvolvimento com 42 dias; holdout está reservado.")
     training_report = json.loads(training_report_path.read_text(encoding="utf-8"))
-    history = training_report.get("selected_history_minutes")
+    history = training_report.get("history_minutes")
     if (training_report.get("scenario_id") != metadata["scenario_id"]
-            or training_report.get("split_days") != {"training": 21, "validation": 7, "final_test": 14}
+            or training_report.get("scenario_sha256") != metadata["scenario_sha256"]
+            or training_report.get("model_scope") != "general_without_zone_identity"
+            or training_report.get("training_days") != 28
+            or training_report.get("validation_training_days") != 21
+            or training_report.get("validation_days") != 7
+            or training_report.get("final_test_used") is not False
+            or training_report.get("holdout_used") is not False
             or not isinstance(history, list) or not history
             or any(type(minutes) is not int or minutes not in HISTORY_COLUMNS for minutes in history)):
         raise ValueError("Relatório de treino incompatível com os exemplos.")
@@ -124,6 +130,7 @@ def write_validation_report(
         "scenario_id": metadata["scenario_id"],
         "source": metadata["source"],
         "scenario_sha256": metadata["scenario_sha256"],
+        "model_scope": "general_without_zone_identity",
         "training_days": 21,
         "validation_days": 7,
         "validation_start_local": (date.fromisoformat(metadata["start_local"]) + timedelta(days=21)).isoformat(),

@@ -1,12 +1,18 @@
+import json
+import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta, timezone
+from pathlib import Path
 
 from smartlighting_ml.evaluate_luminaires import (
     build_luminaire_decisions,
     summarize_luminaire_decisions,
+    write_luminaire_report,
 )
 from smartlighting_ml.topology import Luminaire, Topology
 from smartlighting_ml.zone_windows import ZoneDecision, ZoneWindow
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def make_window(minute: int, zone_pwm: dict[str, int], observed: dict[str, int]) -> ZoneWindow:
@@ -56,3 +62,13 @@ class LuminaireEvaluationTests(unittest.TestCase):
         window = make_window(0, {"Z01": 10}, {"Z01": 0})
         with self.assertRaises(ValueError):
             build_luminaire_decisions([window], self.topology, 20)
+
+    def test_old_model_report_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            input_dir = Path(directory)
+            (input_dir / "summary.json").write_text(json.dumps({
+                "source": "synthetic", "scenario_id": "development",
+                "validation_days": 7, "final_test_used": False, "holdout_used": False,
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "modelo geral"):
+                write_luminaire_report(input_dir, input_dir / "topology.json", input_dir)
