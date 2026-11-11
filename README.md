@@ -9,9 +9,7 @@ O movimento continua prioritário no firmware.
 janelas de 15 minutos, avaliação e treinamento de uma regressão de Poisson
 geral, sem identidade de zona. O firmware executa a versão escolhida desse
 modelo com histórico local de 30 minutos e controla o repouso dos LEDs em PWM
-10, 20 ou 50. O novo cenário `activity_range` amplia os históricos disponíveis
-para estudar uma próxima versão do treinamento; ele ainda não foi treinado nem
-exportado ao firmware. Os eventos gerados são sintéticos e não entram no banco
+10, 20 ou 50. Os eventos gerados são sintéticos e não entram no banco
 operacional da API.
 
 ## Por que simular
@@ -38,9 +36,7 @@ Em `development` e `holdout`, os eventos são amostrados por hora de uma
 distribuição de Poisson, com taxas definidas por sensor, horário, fim de semana
 e uma pequena variação diária. O cenário `persistent_activity` conserva essas
 taxas básicas, mas sorteia as ativações a cada 15 minutos e adiciona períodos
-temporários de maior circulação por zona. O novo `activity_range` reutiliza o
-mesmo gerador e muda apenas a intensidade desses períodos, para incluir mais
-exemplos com várias ativações recentes.
+temporários de maior circulação por zona.
 Essa distribuição é uma **hipótese de geração**, não uma observação sobre
 moradores. A hora local simulada usa deslocamento fixo UTC-03:00.
 
@@ -74,19 +70,6 @@ $env:PYTHONPATH = "src"
 
 Esses comandos criam um conjunto separado; não substituem `development`.
 O estado simulado de maior circulação não é gravado nos exemplos do modelo.
-
-Para gerar o novo cenário de desenvolvimento com mais históricos de atividade
-média e alta, sem substituir os anteriores:
-
-```powershell
-$env:PYTHONPATH = "src"
-.\.venv\Scripts\python.exe -m smartlighting_ml.generate --scenario scenarios/activity_range.json --start-local 2026-08-01 --days 42 --seed 42 --output-dir data/generated/activity_range
-.\.venv\Scripts\python.exe -m smartlighting_ml.prepare --scenario scenarios/activity_range.json --input-dir data/generated/activity_range --output-dir data/processed/activity_range
-```
-
-Os comandos geram eventos e exemplos, **sem treinar um novo modelo**. A
-distribuição observada e as hipóteses estão em
-[`docs/scenario-assumptions.md`](docs/scenario-assumptions.md).
 
 ## Preparar janelas e exemplos
 
@@ -358,10 +341,10 @@ O firmware usa PWM 20 enquanto faltar histórico suficiente.
 
 ## Próximas etapas
 
-1. Comparar históricos de 15, 30 e 15 + 30 minutos usando o novo cenário de
-   desenvolvimento, sem alterar os pesos já instalados nas placas.
-2. Escolher e validar modelo e política de repouso antes de atualizar o
-   firmware. Separar os resultados sintéticos das observações da maquete.
+1. Revisar a política de repouso e a comparação com PWM 20 fixo usando os
+   cenários existentes, sem alterar os pesos já instalados nas placas.
+2. Separar os resultados sintéticos das observações da maquete ao apresentar
+   as conclusões do TCC.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.

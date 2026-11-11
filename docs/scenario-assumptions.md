@@ -1,8 +1,7 @@
 # Hipóteses dos cenários simulados
 
 Este documento registra como foram definidos `scenarios/development.json`,
-`scenarios/holdout.json`, `scenarios/persistent_activity.json` e
-`scenarios/activity_range.json`. Eles servem
+`scenarios/holdout.json` e `scenarios/persistent_activity.json`. Eles servem
 para desenvolver e testar o método de
 previsão de **novas ativações de sensores por zona nos próximos 15 minutos**.
 Uma ativação pode ser causada por qualquer movimento detectado; o gerador não
@@ -113,51 +112,6 @@ O estado interno **não aparece** em `sensor_events.csv`, `windows.csv` nem
 `examples.csv`. O modelo terá apenas horário, zona e contagens já
 observadas, como o firmware. A semente torna o sorteio reproduzível. O cenário
 original permanece disponível para comparar o efeito dessa hipótese.
-
-## Novo cenário para variar a atividade recente
-
-`activity_range.json` é uma hipótese **de desenvolvimento**, criada depois de
-observar que nove ativações nos últimos 30 minutos quase não influenciavam o
-modelo da maquete. Ele reutiliza as seis zonas, as taxas básicas, a curva
-horária, a variação diária, o fator de fim de semana e o gerador de episódios
-de `persistent_activity.json`. A única mudança numérica é
-`rate_multiplier: 3.0 → 8.0`. A chance de iniciar um episódio permanece em 2%
-por janela calma e sua duração continua entre três e cinco janelas (45 a 75
-minutos). Portanto, períodos calmos e janelas vazias continuam presentes.
-
-O multiplicador 8 **não foi medido** numa rua ou inferido das poucas passagens
-induzidas na maquete. Foi escolhido para testar um contraste maior entre
-períodos calmos e movimentados sem mudar o horário ou a frequência dos
-episódios. Por exemplo, para S02 às 19h, a média hipotética é 0,406 ativação
-por janela calma e 3,25 durante um episódio (`0,40625 × 8`). São médias do
-gerador, não metas para o modelo nem garantias de ocorrência.
-
-Gerando 42 dias a partir de 2026-08-01 com semente 42, sem treinar, obtivemos:
-
-| Ativações nos 30 minutos anteriores | `persistent_activity` | `activity_range` |
-| --- | ---: | ---: |
-| 0 | 18.254 | 17.967 |
-| 1–2 | 5.627 | 5.423 |
-| 3–4 | 269 | 534 |
-| 5–8 | 17 | 216 |
-| 9 ou mais | 1 | 28 |
-| **Total de exemplos** | **24.168** | **24.168** |
-
-No novo cenário, 244 exemplos têm cinco ou mais ativações recentes, ante 18
-no anterior. Entre os primeiros 21 dias usados para ajustar um candidato há
-115 desses exemplos; nos sete dias seguintes de validação, 45. Ainda são
-casos pouco frequentes. O arquivo de eventos tem 4.892 ativações; a preparação
-produz 24.192 janelas de zona ao todo, das quais 20.561 são vazias. Nenhuma
-janela vazia foi removida ou preenchida.
-
-Como verificação descritiva dos próprios dados, a parcela de próximas janelas
-com ao menos uma ativação cresce de 11,7% quando o histórico de 30 minutos é
-zero para 46,3% quando ele contém 3–4 ativações e 64,8% com 5–8. Isso mostra
-que a simulação contém um sinal temporal para estudar; **não** é precisão de
-um modelo treinado nem resultado medido em uma rua. O mesmo sorteio produz
-as entradas passadas e a resposta futura, sem entregar ao modelo o estado
-interno do episódio. A comparação entre entradas de 15 e 30 minutos, treino
-e avaliação de PWM ocorrerá na próxima etapa.
 
 ## O que os zeros significam
 
