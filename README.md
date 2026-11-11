@@ -5,27 +5,28 @@ prever a quantidade de novas ativações de sensores por zona nos próximos
 15 minutos e usar a previsão para escolher um brilho de repouso na maquete.
 O movimento continua prioritário no firmware.
 
-**Estado atual:** geração reproduzível de dados simulados, preparação das
-janelas de 15 minutos, avaliação de regras simples e treinamento de uma
-regressão de Poisson em Python. Após comparar as variantes, adotamos um
-**modelo geral sem identidade de zona** para a futura integração. Uma política
-em Python transforma a chance prevista em três níveis de repouso e usa PWM 20
-enquanto faltar histórico. Os pesos são salvos em JSON, mas ainda não há
-implementação do cálculo em C++ nem controle por ML no ESP32. Os eventos
-gerados não são medições reais e não entram no banco operacional da API.
+**Estado atual:** geração reproduzível de dados simulados, preparação de
+janelas de 15 minutos, avaliação e treinamento de uma regressão de Poisson
+geral, sem identidade de zona. O firmware executa a versão escolhida desse
+modelo com histórico local de 30 minutos e controla o repouso dos LEDs em PWM
+10, 20 ou 50. O novo cenário `activity_range` amplia os históricos disponíveis
+para estudar uma próxima versão do treinamento; ele ainda não foi treinado nem
+exportado ao firmware. Os eventos gerados são sintéticos e não entram no banco
+operacional da API.
 
 ## Por que simular
 
-A maquete não consegue reproduzir semanas de circulação residencial. Os três
+A maquete não consegue reproduzir semanas de circulação residencial. Os
 cenários em `scenarios/` são hipóteses declaradas, com seis sensores e seis zonas
 de nomes neutros. A correspondência estrutural com a maquete, incluindo os
 10 LEDs e seus vínculos com as zonas, está em
 [`docs/maquette-topology.md`](docs/maquette-topology.md). Esse mapa veio dos
 cadastros no banco de dados da SmartLighting.Api. As taxas de ativação e os
 multiplicadores horários ainda não foram medidos nem
-calibrados com uma fonte externa. O cenário `holdout` foi reservado para a
-avaliação final e não foi usado para escolher características ou parâmetros do
-modelo. A origem e a justificativa de cada parâmetro estão em
+calibrados com uma fonte externa. O cenário `holdout` ficou fora da escolha
+original e depois foi avaliado; não deve ser apresentado novamente como
+teste independente de uma mudança escolhida após observar seus resultados. A
+origem e a justificativa dos parâmetros estão em
 [`docs/scenario-assumptions.md`](docs/scenario-assumptions.md).
 
 Os arquivos `sensor_events.csv` contêm somente os instantes em que houve
@@ -37,7 +38,9 @@ Em `development` e `holdout`, os eventos são amostrados por hora de uma
 distribuição de Poisson, com taxas definidas por sensor, horário, fim de semana
 e uma pequena variação diária. O cenário `persistent_activity` conserva essas
 taxas básicas, mas sorteia as ativações a cada 15 minutos e adiciona períodos
-temporários de maior circulação por zona.
+temporários de maior circulação por zona. O novo `activity_range` reutiliza o
+mesmo gerador e muda apenas a intensidade desses períodos, para incluir mais
+exemplos com várias ativações recentes.
 Essa distribuição é uma **hipótese de geração**, não uma observação sobre
 moradores. A hora local simulada usa deslocamento fixo UTC-03:00.
 
@@ -71,6 +74,19 @@ $env:PYTHONPATH = "src"
 
 Esses comandos criam um conjunto separado; não substituem `development`.
 O estado simulado de maior circulação não é gravado nos exemplos do modelo.
+
+Para gerar o novo cenário de desenvolvimento com mais históricos de atividade
+média e alta, sem substituir os anteriores:
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m smartlighting_ml.generate --scenario scenarios/activity_range.json --start-local 2026-08-01 --days 42 --seed 42 --output-dir data/generated/activity_range
+.\.venv\Scripts\python.exe -m smartlighting_ml.prepare --scenario scenarios/activity_range.json --input-dir data/generated/activity_range --output-dir data/processed/activity_range
+```
+
+Os comandos geram eventos e exemplos, **sem treinar um novo modelo**. A
+distribuição observada e as hipóteses estão em
+[`docs/scenario-assumptions.md`](docs/scenario-assumptions.md).
 
 ## Preparar janelas e exemplos
 
@@ -141,7 +157,7 @@ Cada diretório recebe `model.json` com os pesos gerais e `report.json` com a
 origem e a validação. Os IDs das zonas de treino são registrados apenas como
 proveniência: **não são entradas do modelo geral**. Esses arquivos são
 recriáveis e ignorados pelo Git. O treino usa `scikit-learn`; a ordem dos pesos
-fica explícita no JSON para a futura conversão ao ESP32.
+fica explícita no JSON para a exportação ao ESP32.
 
 ### Comparação cruzada e pesos escolhidos
 
@@ -166,10 +182,10 @@ $env:PYTHONPATH = "src"
 .\.venv\Scripts\python.exe -m smartlighting_ml.export_firmware
 ```
 
-`config/firmware_model.json` guarda os pesos escolhidos; `config/firmware_reference.json`
-guarda oito entradas e seus resultados esperados em Python. Ambos são
-versionados. Ainda não executam no ESP32: serão usados para conferir se a
-futura implementação em C++ produz as mesmas probabilidades e decisões PWM.
+`config/firmware_model.json` guarda os pesos atualmente usados no firmware;
+`config/firmware_reference.json` guarda oito entradas e seus resultados
+esperados em Python. Ambos são versionados e usados para verificar o cálculo
+em C++.
 
 Para gerar o header de **dados** do firmware a partir do modelo escolhido:
 
@@ -181,8 +197,8 @@ $env:PYTHONPATH = "src"
 O header registra os 27 pesos, a ordem das entradas, os níveis/limites da
 política e o SHA-256 dos dois JSONs de origem. O comando valida o tipo de
 modelo, o cenário e os 30 minutos de histórico antes de escrever. Não executa
-treinamento. O cálculo em C++ já existe no firmware, mas ainda não controla os
-LEDs. O README do projeto `SmartLighting.Firmware` mostra como
+treinamento. O cálculo em C++ controla o repouso dos LEDs. O README do projeto
+`SmartLighting.Firmware` mostra como
 compilar e comparar seus oito resultados com `config/firmware_reference.json`.
 
 Para experimentar uma decisão com os pesos exportados, consulte as opções do
@@ -198,8 +214,7 @@ não entra no cálculo do modelo geral. Informe o caminho de `model.json` e
 quantos minutos de histórico estão disponíveis. Com menos de 30 minutos,
 retorna PWM 20; com histórico completo, informe também hora local, dia da
 semana (0 para segunda, 6 para domingo) e ativações dos últimos 30 minutos.
-Este é um teste em Python: a contagem das janelas e essa regra de início ainda
-precisam ser implementadas no firmware.
+Este comando é um teste em Python da mesma regra de início usada no firmware.
 
 ## Escolher o brilho de repouso em Python
 
@@ -222,9 +237,9 @@ $env:PYTHONPATH = "src"
 Esse exemplo retorna `20/255` e não lista janelas. Para ver a decisão de cada
 janela, use a avaliação abaixo. A previsão e a decisão ficam separadas:
 alterar os níveis ou os limites no JSON não exige treinar novamente o ML,
-mas exigirá repetir a avaliação do controle. O firmware ainda utiliza
-repouso fixo `20/255`, movimento com alvo `255/255` e o fade atual. O próximo
-passo é levar a política escolhida para a futura integração. Veja
+mas exigirá repetir a avaliação do controle e exportar a nova política ao
+firmware. Ele já usa repouso adaptativo, movimento com alvo `255/255` e o fade
+atual. Veja
 [`docs/dimming-policy.md`](docs/dimming-policy.md).
 
 ## Ver as decisões por janela
@@ -274,7 +289,7 @@ $env:PYTHONPATH = "src"
 Nesse exemplo, o LED `L04` recebe `50/255` porque está ligado a Z02, Z03 e
 Z04, que pediram 10, 20 e 50. O comando exige um PWM para cada zona; uma zona
 ausente ou desconhecida é rejeitada. O mesmo cálculo é usado no relatório por
-LED; ainda não foi integrado ao firmware.
+LED; o firmware aplica a mesma regra do maior pedido às luminárias locais.
 
 Para preparar esse relatório, `zone_windows.py` lê o CSV de decisões por zona
 e reúne as seis zonas do mesmo horário e do mesmo par de limites. Ele rejeita
@@ -339,14 +354,14 @@ gerados são ignorados pelo Git; os resultados e limites da conclusão estão em
 [`docs/holdout-evaluation.md`](docs/holdout-evaluation.md). O preparador começa
 os exemplos após uma hora de histórico para manter as mesmas colunas dos
 outros cenários. Por isso são 24.168 janelas de zona avaliadas, e não 24.192.
-O firmware deverá usar PWM 20 enquanto faltar histórico suficiente.
+O firmware usa PWM 20 enquanto faltar histórico suficiente.
 
 ## Próximas etapas
 
-1. Integrar o cálculo C++ ao histórico de ativações por zona e ao controle do
-   repouso dos LEDs, preservando a prioridade imediata do sensor e o fade.
-2. Testar a maquete com a API desligada e comparar o comportamento observado
-   com a avaliação sintética.
+1. Comparar históricos de 15, 30 e 15 + 30 minutos usando o novo cenário de
+   desenvolvimento, sem alterar os pesos já instalados nas placas.
+2. Escolher e validar modelo e política de repouso antes de atualizar o
+   firmware. Separar os resultados sintéticos das observações da maquete.
 
 Resultados em dados simulados demonstrarão o método e o funcionamento do
 sistema; não serão apresentados como precisão medida em um condomínio real.
