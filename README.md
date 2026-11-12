@@ -20,8 +20,8 @@ de nomes neutros. A correspondência estrutural com a maquete, incluindo os
 10 LEDs e seus vínculos com as zonas, está em
 [`docs/maquette-topology.md`](docs/maquette-topology.md). Esse mapa veio dos
 cadastros no banco de dados da SmartLighting.Api. As taxas de ativação e os
-multiplicadores horários ainda não foram medidos nem
-calibrados com uma fonte externa. O cenário `holdout` ficou fora da escolha
+multiplicadores horários não foram medidos na maquete nem calibrados
+numericamente com uma fonte externa. O cenário `holdout` ficou fora da escolha
 original e depois foi avaliado; não deve ser apresentado novamente como
 teste independente de uma mudança escolhida após observar seus resultados. A
 origem e a justificativa dos parâmetros estão em
@@ -103,27 +103,27 @@ As regras são: `zero` (sempre prevê zero), `zona_hora` (média de ativações 
 frequência de janelas ativas por zona e hora calculadas **somente no treino**)
 e `ultima_janela` (repete a contagem dos 15 minutos anteriores). O relatório
 mostra MAE e RMSE para a contagem, e Brier para a probabilidade de ocorrer ao
-menos uma ativação. Mostra também recall, precisão e proporção de alertas com
-limiar **ilustrativo de 20%** de probabilidade. Esse limiar ainda não define
-brilho ou segurança; será revisto na etapa de controle da maquete.
+menos uma ativação. Para calcular recall e precisão **dessas regras de
+referência**, o relatório chama de "alerta" a previsão de chance igual ou
+superior a 20%. Esse corte de 20% só serve para contar acertos e erros no
+relatório; não é usado pelo modelo no ESP32 nem escolhe o brilho. No firmware,
+a chance prevista escolhe PWM 10 abaixo de 5%, PWM 20 de 5% até menos de 30%
+e PWM 40 a partir de 30%.
 
 Todas as métricas se referem a dados simulados. Um MAE baixo isoladamente pode
 favorecer a regra `zero`, porque a maioria das janelas está vazia. Por isso,
 compare também a antecipação de atividade e quantos alertas cada regra produz.
-Os resultados desta execução estão em
+Os resultados históricos e os da reexecução estão em
 [`docs/baseline-evaluation.md`](docs/baseline-evaluation.md).
-O plano futuro de apresentação com o cálculo no ESP32 está em
+O plano de demonstração, incluindo o que já existe no ESP32, está em
 [`docs/firmware-demo-plan.md`](docs/firmware-demo-plan.md).
 
 ## Treinar o modelo geral
 
 O modelo usa hora local, fim de semana e ativações dos últimos 30 minutos.
 Ele não usa a identidade da zona como entrada: uma zona nova pode receber
-previsões após reunir o histórico necessário. Escolhemos essa estrutura para
-permitir novas topologias sem retreinar a cada cadastro. Na validação
-sintética, sua precisão ficou próxima da alternativa com pesos por zona,
-com pequena perda aceita em troca dessa flexibilidade. Isso não comprova
-precisão em ruas reais.
+previsões após reunir o histórico necessário, sem retreinar a cada cadastro.
+Isso não comprova precisão nessa zona nem em ruas reais.
 
 Usando os exemplos preparados, ajuste os pesos gerais com os primeiros 28
 dias. O comando registra também a métrica dos sete dias de validação,
@@ -322,12 +322,16 @@ $env:PYTHONPATH = "src"
 Os testes acima verificam o gerador, o preparador, a avaliação, o modelo, a
 política de brilho e os vínculos entre zonas e LEDs.
 
-## Avaliação final no cenário reservado
+## Reavaliar o cenário usado como holdout
 
-Esta avaliação usa **somente** os pesos já escolhidos em
-`config/firmware_model.json` e a política já definida. Não treina novamente,
-não escolhe outros limites e não usa o resultado para modificar o modelo.
-Para reproduzir o conjunto e os relatórios locais:
+`holdout` serviu como teste reservado da **versão anterior** dos pesos e da
+política 10/20/50 com limites 5%/25%. Depois dessa avaliação, revisamos a
+curva horária e a política. O comando abaixo usa os pesos e limites que
+estiverem atualmente em `config/`; portanto, executá-lo agora produz outra
+análise exploratória, não reproduz os números históricos de
+[`docs/holdout-evaluation.md`](docs/holdout-evaluation.md) e não constitui um
+novo teste independente. O comando não treina nem altera os pesos. Para gerar
+os dados e avaliar o modelo atualmente exportado:
 
 ```powershell
 $env:PYTHONPATH = "src"
@@ -339,16 +343,18 @@ $env:PYTHONPATH = "src"
 `data/evaluated/holdout/` recebe `window_decisions.csv` por zona,
 `luminaire_decisions.csv` por LED e `final_report.json` com as métricas,
 proveniência, semente e comparação com o alvo fixo PWM 20. Esses arquivos
-gerados são ignorados pelo Git; os resultados e limites da conclusão estão em
-[`docs/holdout-evaluation.md`](docs/holdout-evaluation.md). O preparador começa
+gerados são ignorados pelo Git; os resultados da avaliação anterior e seus
+limites estão em [`docs/holdout-evaluation.md`](docs/holdout-evaluation.md).
+O preparador começa
 os exemplos após uma hora de histórico para manter as mesmas colunas dos
 outros cenários. Por isso são 24.168 janelas de zona avaliadas, e não 24.192.
 O firmware usa PWM 20 enquanto faltar histórico suficiente.
 
 ## Próximas etapas
 
-1. Revisar a política de repouso e a comparação com PWM 20 fixo usando os
-   cenários existentes, sem alterar os pesos já instalados nas placas.
+1. Verificar na maquete o comportamento dos dois ESP32 com os pesos e a
+   política atuais. Se os limites de brilho forem revistos, comparar as
+   decisões novamente e atualizar ambas as placas.
 2. Separar os resultados sintéticos das observações da maquete ao apresentar
    as conclusões do TCC.
 
