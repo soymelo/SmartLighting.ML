@@ -1,7 +1,7 @@
 {
   "model_type": "poisson_regression_general_v1",
   "scenario_id": "persistent_activity",
-  "scenario_sha256": "f3445f365ee0b836c3d4ebf2bacf9264b705763722cbbbe6e210679c849bba9d",
+  "scenario_sha256": "ed0ea9432281120a4b27df5506f90e4b3eac8c2f825eaa587f78a501a16fa047",
   "pwm_levels": {
     "low": 10,
     "standard": 20,
@@ -16,64 +16,64 @@
       "local_hour": 3,
       "local_weekday": 1,
       "previous_30m_count": 0,
-      "predicted_count": 0.04658332831033509,
-      "activity_probability": 0.045514978367999046,
+      "predicted_count": 0.043309311888317964,
+      "activity_probability": 0.0423848574950639,
       "rest_pwm": 10
     },
     {
       "local_hour": 3,
       "local_weekday": 1,
       "previous_30m_count": 3,
-      "predicted_count": 0.06539277287769162,
-      "activity_probability": 0.06330051903529216,
+      "predicted_count": 0.06690369874488772,
+      "activity_probability": 0.0647147338549523,
       "rest_pwm": 20
     },
     {
       "local_hour": 18,
       "local_weekday": 1,
       "previous_30m_count": 0,
-      "predicted_count": 0.34381602548656903,
-      "activity_probability": 0.2909406350977338,
+      "predicted_count": 0.3213202315404504,
+      "activity_probability": 0.27480901522353335,
       "rest_pwm": 20
     },
     {
       "local_hour": 19,
       "local_weekday": 1,
       "previous_30m_count": 1,
-      "predicted_count": 0.41184147519487085,
-      "activity_probability": 0.3375707207985023,
+      "predicted_count": 0.3702269933822963,
+      "activity_probability": 0.30942244369058425,
       "rest_pwm": 40
     },
     {
       "local_hour": 19,
       "local_weekday": 1,
       "previous_30m_count": 6,
-      "predicted_count": 0.5595528119217275,
-      "activity_probability": 0.428535441144728,
+      "predicted_count": 0.5484595438670455,
+      "activity_probability": 0.4221607388416422,
       "rest_pwm": 40
     },
     {
       "local_hour": 19,
       "local_weekday": 5,
       "previous_30m_count": 0,
-      "predicted_count": 0.3178317274501304,
-      "activity_probability": 0.2722747657070546,
+      "predicted_count": 0.26298774870561953,
+      "activity_probability": 0.23124868454786104,
       "rest_pwm": 20
     },
     {
       "local_hour": 19,
       "local_weekday": 5,
       "previous_30m_count": 6,
-      "predicted_count": 0.5116321998157187,
-      "activity_probability": 0.40048375051282203,
+      "predicted_count": 0.4842241635927701,
+      "activity_probability": 0.3838249375858211,
       "rest_pwm": 40
     },
     {
       "local_hour": 23,
       "local_weekday": 6,
       "previous_30m_count": 2,
-      "predicted_count": 0.11196646787773756,
-      "activity_probability": 0.10592576279565347,
+      "predicted_count": 0.09452218294309142,
+      "activity_probability": 0.09019244780697651,
       "rest_pwm": 20
     }
   ]
