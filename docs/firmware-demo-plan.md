@@ -2,8 +2,11 @@
 
 Este documento registra uma proposta para a apresentação à banca. **O modelo
 já foi integrado ao ESP32; o comando de avanço artificial de janelas ainda
-não foi implementado.** Os pesos exportados atualmente são anteriores à curva
-horária revisada; treinar novamente em Python não atualiza a placa.
+não foi implementado.** Os pesos de `persistent_activity` com a curva horária
+revisada foram exportados para `config/firmware_model.json` e para
+`SmartLighting.Firmware/src/Control/ActivityModelWeights.h`. O firmware usa
+5%/30% e PWM 10/20/40. Um treino futuro em Python só chegará às placas após
+nova exportação, compilação e gravação de cada ESP32.
 
 ## O que existe hoje
 

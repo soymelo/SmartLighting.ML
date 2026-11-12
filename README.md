@@ -12,6 +12,15 @@ modelo com histórico local de 30 minutos e controla o repouso dos LEDs em PWM
 10, 20 ou 40. Os eventos gerados são sintéticos e não entram no banco
 operacional da API.
 
+## Leitura rápida para o TCC
+
+Comece por [versão atual do ML na maquete](docs/current-version.md). Esse
+resumo reúne o modelo e a política realmente exportados, as evidências
+disponíveis e seus limites. Os relatórios antigos em `docs/` ficam como
+registro opcional do desenvolvimento: algumas tabelas usam PWM 10/20/50 e
+limites 5%/25% e não representam a configuração atual. As seções abaixo
+documentam os comandos para reproduzir e estudar cada etapa.
+
 ## Por que simular
 
 A maquete não consegue reproduzir semanas de circulação residencial. Os

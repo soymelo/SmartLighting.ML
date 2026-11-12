@@ -2,16 +2,18 @@
 
 > **Registro histórico.** A tabela e a decisão abaixo usam a curva horária
 > anterior e a política PWM 10/20/50 com limites 5%/25%. Os resultados do
-> novo treino estão na seção final. Os pesos em `config/firmware_model.json`
-> ainda são os antigos; o treino novo não foi exportado para o ESP32.
+> novo treino estão na seção final. Desde então, os pesos de
+> `persistent_activity` com a curva revisada foram exportados para
+> `config/firmware_model.json` e para o firmware. As tabelas antigas não
+> descrevem os pesos nem a política atualmente instalados.
 
 Os dois modelos gerais foram treinados com dados **simulados**, sem usar IDs de
 zona como entrada. Para comparar os pesos sem favorecer o cenário de origem,
 ajustamos um modelo com os dias 1–21 de `development` e outro com os dias 1–21
 de `persistent_activity`. Ambos foram avaliados nas mesmas 4.032 janelas dos
 dias 22–28 de cada cenário. O teste final de 14 dias e `holdout` não entraram
-nesta comparação. Os arquivos exportados com 28 dias só serão usados após a
-escolha; avaliá-los nos dias 22–28 contaminaria a validação.
+nesta comparação. Os arquivos ajustados com 28 dias foram usados somente após
+a escolha; avaliá-los nos dias 22–28 contaminaria a validação.
 
 | Cenário avaliado | Modelo treinado em | Brier ↓ | MAE ↓ | Janelas em PWM 10 (ativas) | Janelas em PWM 50 (ativas) | PWM médio por zona-janela |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
@@ -38,13 +40,14 @@ três janelas ativas adicionais em PWM 10. O objetivo do TCC nesta escolha é
 antecipar atividade para o repouso preventivo, mantendo o sensor como prioridade
 quando ocorre movimento. Não há evidência de economia elétrica nessa tabela.
 
-O arquivo `config/firmware_model.json` contém o ajuste final escolhido com os
-primeiros **28 dias** de atividade persistente. Não é o mesmo ajuste de 21 dias
-usado para comparar os candidatos. `config/firmware_reference.json` contém oito
-entradas calculadas com esses pesos e a política então vigente de 5%/25%, para
-conferir o cálculo em C++. O modelo e os resultados continuam limitados às hipóteses
-dos cenários sintéticos; a maquete verificará a execução física, não a precisão
-em uma rua real.
+Naquela etapa, exportamos o ajuste com os primeiros **28 dias** de atividade
+persistente, depois da comparação feita com 21 dias de treino e sete de
+validação. Os arquivos `config/firmware_model.json` e
+`config/firmware_reference.json` foram atualizados após a revisão da curva e
+da política; hoje contêm os pesos escolhidos e os exemplos de referência para
+5%/30% e PWM 10/20/40. Os resultados continuam limitados às hipóteses dos
+cenários sintéticos; a maquete verifica a execução física, não a precisão em
+uma rua real.
 
 ## Novo treino com a curva horária revisada
 
@@ -69,8 +72,10 @@ janelas. O modelo persistente pediu PWM 40 inclusive em algumas janelas que
 acabaram vazias. Isso é um compromisso entre repouso preventivo e tempo em
 brilho mais alto, não evidência de economia elétrica. Os pesos finais
 reajustados nos primeiros 28 dias estão em `models/development/model.json` e
-`models/persistent_activity/model.json`; escolher e exportar um deles para o
-firmware exige uma decisão separada. O relatório reproduzível está em
+`models/persistent_activity/model.json`. Escolhemos os de
+`persistent_activity` e os exportamos para `config/firmware_model.json` e
+`SmartLighting.Firmware/src/Control/ActivityModelWeights.h`. O relatório da
+comparação está em
 `data/evaluated/model_comparison.json`.
 
 ### Comparação direta com uma regra simples
