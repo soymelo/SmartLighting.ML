@@ -1,5 +1,9 @@
 # Validação exploratória do repouso por LED
 
+> **Registro histórico.** A tabela e a interpretação seguintes usam a curva
+> horária anterior e a política PWM 10/20/50 com corte alto de 25%. Os
+> resultados recalculados aparecem na seção final.
+
 Este relatório aplica aos LEDs da [topologia da maquete](maquette-topology.md)
 as decisões por zona descritas em [dimming-validation.md](dimming-validation.md).
 Os dados são **sintéticos** e cobrem os sete dias de validação de 22 a 28 de
@@ -71,4 +75,26 @@ relatório lê a topologia informada no comando; o modelo não incorpora os
 GUIDs ou o número de LEDs da maquete. Uma topologia diferente pode ser
 avaliada com outras associações entre zonas e LEDs. O modelo geral aceita IDs
 de zonas inéditas após haver histórico suficiente; a integração ao firmware
-ainda está pendente.
+foi implementada depois desta avaliação histórica.
+
+## Reexecução com a curva e a política atuais
+
+Regeramos os cenários e aplicamos aos dez LEDs da maquete o maior pedido das
+zonas associadas. Cada linha contém 6.720 LED-janelas dos sete dias de
+validação. O corte alto ficou em 30% e o PWM alto em 40. O corte baixo
+configurado é 5%; as alternativas de 10% e 15% são apenas comparação.
+
+| Cenário | Baixo abaixo de | PWM 10 | PWM 20 | PWM 40 | LED-janelas ativas em PWM 10 | PWM médio por LED-janela |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Desenvolvimento | 5% | 1.196 | 5.524 | 0 | 60 | 18,22 |
+| Desenvolvimento | 10% | 2.477 | 4.243 | 0 | 256 | 16,31 |
+| Desenvolvimento | 15% | 5.040 | 1.680 | 0 | 980 | 12,50 |
+| Atividade persistente | 5% | 569 | 5.522 | 629 | 14 | 21,03 |
+| Atividade persistente | 10% | 2.147 | 3.944 | 629 | 219 | 18,68 |
+| Atividade persistente | 15% | 3.758 | 2.333 | 629 | 665 | 16,28 |
+
+Com os limites escolhidos de 5%/30%, o modelo persistente prevê três níveis
+de repouso, mas seu alvo médio por LED é **21,03**, acima do alvo fixo PWM 20.
+Isso não demonstra redução do brilho médio; PWM também não é potência ou
+energia medida. Os CSVs e resumos reproduzíveis estão em
+`data/evaluated/<cenário>/`.

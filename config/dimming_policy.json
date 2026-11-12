@@ -3,10 +3,10 @@
   "pwm_levels": {
     "low": 10,
     "standard": 20,
-    "high": 50
+    "high": 40
   },
   "probability_thresholds": {
     "standard_at": 0.05,
-    "high_at": 0.25
+    "high_at": 0.30
   }
 }

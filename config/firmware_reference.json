@@ -5,11 +5,11 @@
   "pwm_levels": {
     "low": 10,
     "standard": 20,
-    "high": 50
+    "high": 40
   },
   "probability_thresholds": {
     "standard_at": 0.05,
-    "high_at": 0.25
+    "high_at": 0.3
   },
   "cases": [
     {
@@ -34,7 +34,7 @@
       "previous_30m_count": 0,
       "predicted_count": 0.34381602548656903,
       "activity_probability": 0.2909406350977338,
-      "rest_pwm": 50
+      "rest_pwm": 20
     },
     {
       "local_hour": 19,
@@ -42,7 +42,7 @@
       "previous_30m_count": 1,
       "predicted_count": 0.41184147519487085,
       "activity_probability": 0.3375707207985023,
-      "rest_pwm": 50
+      "rest_pwm": 40
     },
     {
       "local_hour": 19,
@@ -50,7 +50,7 @@
       "previous_30m_count": 6,
       "predicted_count": 0.5595528119217275,
       "activity_probability": 0.428535441144728,
-      "rest_pwm": 50
+      "rest_pwm": 40
     },
     {
       "local_hour": 19,
@@ -58,7 +58,7 @@
       "previous_30m_count": 0,
       "predicted_count": 0.3178317274501304,
       "activity_probability": 0.2722747657070546,
-      "rest_pwm": 50
+      "rest_pwm": 20
     },
     {
       "local_hour": 19,
@@ -66,7 +66,7 @@
       "previous_30m_count": 6,
       "predicted_count": 0.5116321998157187,
       "activity_probability": 0.40048375051282203,
-      "rest_pwm": 50
+      "rest_pwm": 40
     },
     {
       "local_hour": 23,

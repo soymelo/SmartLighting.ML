@@ -9,7 +9,7 @@ O movimento continua prioritário no firmware.
 janelas de 15 minutos, avaliação e treinamento de uma regressão de Poisson
 geral, sem identidade de zona. O firmware executa a versão escolhida desse
 modelo com histórico local de 30 minutos e controla o repouso dos LEDs em PWM
-10, 20 ou 50. Os eventos gerados são sintéticos e não entram no banco
+10, 20 ou 40. Os eventos gerados são sintéticos e não entram no banco
 operacional da API.
 
 ## Por que simular
@@ -156,6 +156,8 @@ $env:PYTHONPATH = "src"
 ```
 
 O relatório reproduzível fica em `data/evaluated/model_comparison.json`.
+[`docs/model-selection.md`](docs/model-selection.md) separa a comparação
+histórica da reexecução com a curva horária revisada e a política atual.
 Escolhemos os pesos gerais treinados em `persistent_activity`, conforme a
 análise em [`docs/model-selection.md`](docs/model-selection.md). Para congelar
 esses pesos e criar previsões de referência para a implementação em C++:
@@ -203,12 +205,14 @@ Este comando é um teste em Python da mesma regra de início usada no firmware.
 
 Os níveis definidos para a maquete ficam em
 [`config/dimming_policy.json`](config/dimming_policy.json): PWM baixo `10`,
-padrão `20` e alto `50`, numa escala de 0 a 255. A política
+padrão `20` e alto `40`, numa escala de 0 a 255. A política
 usa a **chance de pelo menos uma ativação nos próximos 15 minutos**, produzida
 por `PoissonModel.predict()`: abaixo de 5% escolhe baixo; de 5% até menos
-de 25%, padrão; a partir de 25%, alto. Escolhemos esses limites após a análise
-exploratória dos sete dias de validação sintética. Eles já foram avaliados no
-`holdout` sintético, mas não em circulação real.
+de 30%, padrão; a partir de 30%, alto. O limite baixo de 5% foi mantido e o
+alto passou a 30% após a comparação exploratória. Os relatórios antigos do
+`holdout` documentam a política anterior, 10/20/50 e 5%/25%; não são uma
+avaliação independente da política atual.
+
 Para experimentar **uma probabilidade informada manualmente**, sem ler os CSVs
 nem percorrer as janelas:
 
@@ -229,11 +233,13 @@ atual. Veja
 
 Com os exemplos já preparados e o relatório de treino de cada cenário,
 compare os limites de **chance prevista** de 5%, 10% e 15% usados para escolher o
-repouso baixo, mantendo o limite alto de 25% do JSON. O limite configurado
+repouso baixo, mantendo o limite alto de 30% do JSON. O limite configurado
 após essa comparação é 5%; as três alternativas permanecem no relatório
 para mostrar a decisão. Esses
-percentuais são probabilidades, não valores de PWM. O programa **não gera novos
-eventos** nem usa os 14 dias finais ou
+percentuais são probabilidades, não valores de PWM. Os relatórios versionados
+em `docs/dimming-validation.md` registram a configuração antiga de 25%/50;
+reexecutar estes comandos usa a política atual de 30%/40. O programa **não
+gera novos eventos** nem usa os 14 dias finais ou
 o cenário `holdout`. Reajusta o modelo nos primeiros 21 dias e mostra somente
 as decisões dos 7 dias seguintes:
 
@@ -266,11 +272,11 @@ Para conferir um conjunto de pedidos sem gerar CSV nem treinar o modelo:
 
 ```powershell
 $env:PYTHONPATH = "src"
-.\.venv\Scripts\python.exe -m smartlighting_ml.topology --zone-pwm Z01=10 --zone-pwm Z02=10 --zone-pwm Z03=20 --zone-pwm Z04=50 --zone-pwm Z05=10 --zone-pwm Z06=20
+.\.venv\Scripts\python.exe -m smartlighting_ml.topology --zone-pwm Z01=10 --zone-pwm Z02=10 --zone-pwm Z03=20 --zone-pwm Z04=40 --zone-pwm Z05=10 --zone-pwm Z06=20
 ```
 
-Nesse exemplo, o LED `L04` recebe `50/255` porque está ligado a Z02, Z03 e
-Z04, que pediram 10, 20 e 50. O comando exige um PWM para cada zona; uma zona
+Nesse exemplo, o LED `L04` recebe `40/255` porque está ligado a Z02, Z03 e
+Z04, que pediram 10, 20 e 40. O comando exige um PWM para cada zona; uma zona
 ausente ou desconhecida é rejeitada. O mesmo cálculo é usado no relatório por
 LED; o firmware aplica a mesma regra do maior pedido às luminárias locais.
 

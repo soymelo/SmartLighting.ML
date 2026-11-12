@@ -1,5 +1,12 @@
 # Avaliação final do modelo escolhido
 
+> **Registro histórico.** Esta avaliação usou os pesos treinados com a curva
+> horária anterior e a política PWM 10/20/50, limites 5%/25%. A curva e a
+> política foram revisadas posteriormente. Os novos pesos ainda não foram
+> exportados e este resultado não valida a configuração nova. Reutilizar o
+> mesmo `holdout` para escolher parâmetros e depois apresentá-lo como teste
+> independente comprometeria essa separação.
+
 Antes deste teste, escolhemos os pesos gerais treinados com 28 dias do cenário
 `persistent_activity` e fixamos a política: chance menor que 5% → PWM 10,
 de 5% a menos de 25% → PWM 20, e a partir de 25% → PWM 50. Esta avaliação
@@ -71,4 +78,5 @@ topologia para reprodução. O modelo já havia sido escolhido quando executamos
 o `holdout`; esse conjunto não será usado para reajustar o mesmo modelo e
 depois apresentar uma nova medição como independente. O resultado mede o
 desempenho **neste cenário sintético**, não a precisão em uma rua residencial
-real. O cálculo ainda não foi integrado ao ESP32.
+real. Na data desta avaliação, o cálculo ainda não havia sido integrado ao
+ESP32; a integração ocorreu posteriormente.

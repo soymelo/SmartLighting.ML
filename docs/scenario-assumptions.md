@@ -2,8 +2,8 @@
 
 Este documento registra como foram definidos `scenarios/development.json`,
 `scenarios/holdout.json` e `scenarios/persistent_activity.json`. Eles servem
-para desenvolver e testar o método de
-previsão de **novas ativações de sensores por zona nos próximos 15 minutos**.
+para desenvolver e testar o método de previsão de
+**novas ativações de sensores por zona nos próximos 15 minutos**.
 Uma ativação pode ser causada por qualquer movimento detectado; o gerador não
 distingue pedestres, carros ou outras causas.
 
@@ -18,9 +18,7 @@ distingue pedestres, carros ou outras causas.
   residencial. Não há evidência para afirmar que uma zona real recebe mais
   passagens que outra ou que o pico real ocorre exatamente às 19h.
 - A maquete pode ser demonstrada em qualquer horário. Por isso, os cenários
-  geram ativações nas 24 horas. A futura regra de ligar iluminação pública
-  somente à noite pertence ao controle operacional; não é representada por
-  `hour_multipliers` e ainda não foi implementada.
+  geram ativações nas 24 horas.
 
 Resultados nesses dados demonstram a execução e a comparação dos métodos no
 cenário definido. Não estimam precisão ou economia em uma rua real.
@@ -56,25 +54,30 @@ Os 24 multiplicadores foram desenhados como uma curva **ilustrativa**:
 
 | Horas locais | Desenvolvimento | Ideia representada |
 | --- | --- | --- |
-| 00h–05h | 0,12 a 0,25 | Circulação supostamente baixa na madrugada. |
-| 06h–09h | 0,55 a 1,30 | Aumento hipotético pela manhã. |
+| 00h–05h | 0,09 a 0,40 | Circulação baixa na madrugada e início gradual às 05h. |
+| 06h–09h | 0,80 a 1,30 | Aumento hipotético pela manhã. |
 | 10h–16h | 0,75 a 1,05 | Circulação intermediária. |
-| 17h–21h | 1,35 a 2,50 | Pico hipotético no início da noite; máximo às 19h. |
+| 17h–21h | 1,35 a 2,00 | Pico hipotético no início da noite; máximo às 19h. |
 | 22h–23h | 0,45 a 0,80 | Redução hipotética no fim da noite. |
 
-Os valores dentro de cada faixa foram escolhidos para fazer uma transição
-gradual. Não há fonte que justifique cada valor decimal. No `holdout`, a manhã
+Os valores dentro de cada faixa foram escolhidos como hipótese para fazer uma
+transição gradual. A Pesquisa Origem e Destino 2023 do Metrô de São Paulo
+([página oficial](https://www.metro.sp.gov.br/pesquisa-od/)) ajuda a discutir
+horários de deslocamento na região metropolitana, mas não mede ativações dos
+sensores da maquete nem determina estes multiplicadores. Nenhuma fonte justifica
+cada valor decimal ou comprova a curva de uma rua residencial. No `holdout`, a manhã
 é relativamente mais forte, o pico noturno é menos concentrado às 19h e as
 taxas por sensor são diferentes. Isso permite verificar a sensibilidade do
 método a outra **hipótese simulada**, não sua generalização para dados reais.
-O `holdout` permaneceu reservado até a
-[`avaliação final`](holdout-evaluation.md). Não ajustamos o modelo ou o cenário
-de desenvolvimento para obter um resultado melhor nele.
+O `holdout` permaneceu reservado até a primeira
+[`avaliação final`](holdout-evaluation.md). A revisão atual da curva ocorreu
+**depois** daquela avaliação; portanto, o mesmo `holdout` já não pode ser
+apresentado como teste independente de um novo modelo escolhido agora.
 
 Por exemplo, em um dia útil sem variação diária, `S01` às 19h no cenário de
-desenvolvimento tem taxa média `0,80 × 2,50 = 2` ativações por hora, ou
-`0,50` por intervalo de 15 minutos. Uma janela específica ainda pode ter zero
-ativações. Às 03h, a taxa é `0,80 × 0,12 = 0,096` por hora.
+desenvolvimento tem taxa média `0,80 × 2,00 = 1,60` ativação por hora, ou
+`0,40` por intervalo de 15 minutos. Uma janela específica ainda pode ter zero
+ativações. Às 03h, a taxa é `0,80 × 0,09 = 0,072` por hora.
 
 ## Cenário adicional com atividade persistente
 
@@ -103,8 +106,8 @@ hora local. Não significam que uma rua residencial tenha episódios exatamente
 nessa frequência, duração ou intensidade.
 
 Por exemplo, `S02` às 19h em um dia útil sem variação diária tem taxa básica
-`0,65 × 2,50 × 15/60 = 0,40625` ativação esperada por janela. Durante um
-período movimentado, a média sobe para `1,21875` por janela. A janela ainda
+`0,65 × 2,00 × 15/60 = 0,325` ativação esperada por janela. Durante um
+período movimentado, a média sobe para `0,975` por janela. A janela ainda
 pode ter zero ativações em ambos os estados. Uma sequência recente com várias
 ativações pode sugerir ao modelo que o período continua; não é garantia.
 
@@ -115,23 +118,23 @@ original permanece disponível para comparar o efeito dessa hipótese.
 
 ## O que os zeros significam
 
-No conjunto de desenvolvimento gerado anteriormente com início em 2026-08-01,
-42 dias e semente 42, houve 3.328 ativações em 24.192 janelas por zona; 21.190
-janelas (87,6%) tiveram contagem zero. Às 03h, 1,9% das janelas tiveram ao
-menos uma ativação; às 19h, 30,6%. Isso é compatível com as taxas baixas e com
-o sorteio por hora. **As janelas vazias são dados válidos** e não devem ser
+Na geração atual, com início em 2026-08-01, 42 dias e semente 42, o cenário
+`development` produziu 3.230 ativações em 24.192 janelas por zona; 21.266
+janelas (87,9%) tiveram contagem zero. `persistent_activity` produziu 3.788
+ativações; 20.842 janelas (86,2%) ficaram vazias. **As janelas vazias são
+dados válidos** e não devem ser
 removidas ou preenchidas artificialmente.
 
 Uma regra que prevê zero em todas as janelas acertaria a contagem exata em
-87,6% delas, mas nunca anteciparia atividade. Ela será uma referência simples
-na avaliação, não o comportamento esperado do modelo futuro. Além do erro de
-contagem, precisamos medir se o controle escolhe brilho suficiente quando há
-atividade e qual consumo estimado resulta de suas decisões.
+87,9% das janelas de `development` e 86,2% das de `persistent_activity`, mas
+nunca anteciparia atividade. Por isso, além do erro de contagem, avaliamos a
+qualidade da probabilidade prevista e as janelas ativas iniciadas em cada
+nível de repouso. PWM médio não equivale a consumo elétrico medido.
 
 ## Decisões metodológicas
 
 1. Manter a origem sintética visível no CSV, nos metadados e nos resultados.
-2. Usar os níveis PWM 10/20/50 definidos para a maquete e avaliar
+2. Usar os níveis PWM 10/20/40 definidos para a maquete e avaliar
    separadamente os limites de probabilidade que escolhem cada nível.
 3. Comparar a previsão com referências simples, incluindo zero constante e
    uma regra baseada na hora, antes de afirmar vantagem do ML.

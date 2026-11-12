@@ -8,17 +8,16 @@ diretamente, para escolher o PWM de repouso:
 | Chance prevista | Nível | PWM de 8 bits |
 | --- | --- | ---: |
 | Menor que 5% | Baixo | 10/255 |
-| De 5% até menos de 25% | Padrão | 20/255 |
-| A partir de 25% | Alto | 50/255 |
+| De 5% até menos de 30% | Padrão | 20/255 |
+| A partir de 30% | Alto | 40/255 |
 
-Os níveis PWM 10/20/50 foram aceitos para a maquete. Escolhemos os **limites
-de probabilidade** de 5% e 25% após comparar decisões nos dados sintéticos
-de validação. O corte baixo de 5% reduz as janelas ativas que começam em PWM
-10 em relação às alternativas de 10% e 15%. O corte alto de 25% foi mantido;
-não o comparamos com outras alternativas. A política foi avaliada no `holdout`
-sintético após a escolha dos limites; os resultados estão em
-[`holdout-evaluation.md`](holdout-evaluation.md). Ainda não foi avaliada em
-circulação real. O percentual de probabilidade
+O PWM alto foi ajustado para 40 após comparação visual na maquete. Mantivemos
+o limite baixo de 5% e adotamos 30% para o alto após uma comparação
+exploratória em cenários sintéticos. Os relatórios anteriores, inclusive
+[`holdout-evaluation.md`](holdout-evaluation.md), registram a política
+**10/20/50 com limites 5%/25%** e não comprovam o desempenho da política
+atual em um teste independente. Ela ainda não foi avaliada em circulação
+real. O percentual de probabilidade
 e o valor de PWM são grandezas diferentes. PWM não mede diretamente consumo
 elétrico.
 
@@ -31,20 +30,19 @@ pedido aos LEDs que pertencem a várias zonas, usando o mapa da maquete em
 `config/maquette_topology.json`.
 
 Exemplo: se `PoissonModel.predict()` devolver chance 0,18, a política escolhe
-`standard`, PWM 20/255. Se devolver 0,28, escolhe `high`, PWM 50/255.
+`standard`, PWM 20/255. Se devolver 0,32, escolhe `high`, PWM 40/255.
 Mudar esses valores no JSON não altera os pesos do modelo, pois o modelo
 aprende a prever ativações, não valores de PWM. Quando a política chegar ao
-ESP32, será necessário publicar a configuração atualizada na placa.
+ESP32, é necessário gravar o firmware com o cabeçalho gerado atualizado.
 
-Este arquivo descreve apenas o **repouso**. No firmware atual, o sensor ativo
+Este arquivo descreve apenas o **repouso**. No firmware, o sensor ativo
 continua tendo alvo 255/255 e a subida e descida mantêm o fade testado na
-maquete. Na futura integração, LEDs compartilhados por zonas deverão usar o
-maior nível de repouso solicitado. Se faltar horário válido para a previsão,
-o padrão proposto é o nível intermediário de 20/255. O mesmo padrão é usado
-em Python durante os primeiros 30 minutos de uma zona, até haver histórico
-suficiente para o modelo geral. Essa regra ainda não foi integrada ao firmware.
+maquete. LEDs compartilhados por zonas usam o maior nível solicitado. Se
+faltar horário válido ou histórico suficiente para a previsão, o repouso
+fica em 20/255.
 
 Comparamos os limites baixos de 5%, 10% e 15% nos dias de validação e
-escolhemos 5% para a configuração. Os resultados por zona estão em
+escolhemos 5% para a configuração inicial. Os resultados históricos com
+o corte alto anterior de 25% e PWM 50 estão em
 [`dimming-validation.md`](dimming-validation.md) e por LED em
 [`luminaire-validation.md`](luminaire-validation.md).

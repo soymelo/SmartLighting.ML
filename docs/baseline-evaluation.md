@@ -1,5 +1,10 @@
 # Avaliação inicial de regras simples
 
+> **Registro histórico.** A tabela e os exemplos abaixo foram calculados com
+> a curva horária anterior. Os novos resultados da mesma rotina aparecem na
+> seção final; não compare métricas de períodos de teste diferentes como se
+> fossem uma disputa direta com o ML.
+
 Esta avaliação estabelece referências **antes** do treinamento de Machine
 Learning. Usa os conjuntos sintéticos de `development` e
 `persistent_activity`, gerados com início em 2026-08-01, 42 dias e semente 42.
@@ -74,3 +79,22 @@ relatório; ainda não comandam luminárias.
 Esses resultados se referem somente aos cenários sintéticos declarados.
 Ainda não medem economia de energia, percepção visual, segurança da maquete
 nem desempenho de um modelo de ML no ESP32.
+
+## Reexecução após revisar a curva horária
+
+Recriamos os dois conjuntos com 42 dias e semente 42. A regra `zona_hora`
+foi calculada nos primeiros 28 dias e testada nos 14 dias seguintes. O
+limiar ilustrativo de alerta permaneceu em 20%; ele não controla o PWM.
+
+| Cenário | Regra | MAE ↓ | RMSE ↓ | Brier ↓ | Recall ↑ | Precisão ↑ | Janelas alertadas |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Desenvolvimento | `zero` | 0,135 | 0,405 | 0,121 | 0,0% | — | 0,0% |
+| Desenvolvimento | `zona_hora` | 0,223 | 0,373 | 0,102 | 33,2% | 23,1% | 17,4% |
+| Desenvolvimento | `ultima_janela` | 0,233 | 0,531 | 0,207 | 14,7% | 14,7% | 12,1% |
+| Atividade persistente | `zero` | 0,155 | 0,442 | 0,139 | 0,0% | — | 0,0% |
+| Atividade persistente | `zona_hora` | 0,251 | 0,404 | 0,114 | 41,7% | 23,8% | 24,3% |
+| Atividade persistente | `ultima_janela` | 0,250 | 0,554 | 0,219 | 20,9% | 20,9% | 13,9% |
+
+Os novos modelos gerais foram comparados em sete dias de validação, conforme
+`model-selection.md`. Para afirmar vantagem do ML sobre `zona_hora`, ambos
+precisam ser avaliados nos mesmos exemplos e com a mesma separação temporal.

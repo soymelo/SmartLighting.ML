@@ -1,5 +1,9 @@
 # Comparação dos limites de repouso
 
+> **Registro histórico.** A tabela e a análise seguintes usam a curva
+> horária antiga e a política PWM 10/20/50 com corte alto de 25%. A reexecução
+> com os cenários revisados e PWM 10/20/40 está na seção final.
+
 Este relatório mostra **decisões simuladas por zona e janela**, não o brilho
 executado no ESP32. Usamos os CSVs sintéticos existentes, com início em
 2026-08-01 e semente 42. Para cada cenário, ajustamos a regressão de Poisson
@@ -73,3 +77,24 @@ seis decisões do mesmo horário e limite em um grupo completo. A leitura
 confere que há os mesmos horários em todos os candidatos e que mudar o limite
 não alterou a previsão nem a resposta histórica. O relatório por LED aplica
 o maior PWM solicitado pelas zonas associadas a cada luminária.
+
+## Reexecução com a curva e a política atuais
+
+Regeramos os dois cenários com 42 dias e semente 42. Em cada um, o modelo
+geral foi treinado nos primeiros 21 dias e avaliado nos sete dias seguintes.
+Cada linha contém 4.032 janelas de zona. O corte alto é 30%, o PWM alto é 40
+e apenas o corte baixo varia. Os 14 dias finais e `holdout` não entraram.
+
+| Cenário | Baixo abaixo de | PWM 10 | PWM 20 | PWM 40 | Janelas ativas em PWM 10 | PWM médio por zona-janela |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Desenvolvimento | 5% | 719 | 3.313 | 0 | 16 de 497 | 18,22 |
+| Desenvolvimento | 10% | 1.487 | 2.545 | 0 | 70 de 497 | 16,31 |
+| Desenvolvimento | 15% | 3.024 | 1.008 | 0 | 278 de 497 | 12,50 |
+| Atividade persistente | 5% | 365 | 3.440 | 227 | 5 de 561 | 20,22 |
+| Atividade persistente | 10% | 1.341 | 2.464 | 227 | 64 de 561 | 17,80 |
+| Atividade persistente | 15% | 2.469 | 1.336 | 227 | 212 de 561 | 15,00 |
+
+O limite atualmente configurado é **5%**. Assim, no cenário persistente, 5
+das 561 janelas com atividade começariam em repouso baixo; o sensor ainda
+reagiria à detecção. A média desta tabela é por zona, não por LED e não mede
+energia. As decisões reproduzíveis estão em `data/evaluated/<cenário>/`.
