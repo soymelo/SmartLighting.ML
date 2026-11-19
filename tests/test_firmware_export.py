@@ -1,4 +1,4 @@
-"""Confere os exemplos congelados para a futura implementação em C++."""
+"""Confere os exemplos congelados usados na verificação da implementação em C++."""
 
 import json
 import tempfile

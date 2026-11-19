@@ -97,8 +97,8 @@ def main() -> None:
             low = scores["levels"]["low"]
             high = scores["levels"]["high"]
             print(f"  Treinado em {trained_on}: Brier {scores['brier']:.5f} | "
-                  f"MAE {scores['mae']:.5f} | PWM 10: {low['windows']} "
-                  f"({low['active_windows']} ativas) | PWM 50: {high['windows']} "
+                  f"MAE {scores['mae']:.5f} | PWM {report['policy']['pwm']['low']}: {low['windows']} "
+                  f"({low['active_windows']} ativas) | PWM {report['policy']['pwm']['high']}: {high['windows']} "
                   f"({high['active_windows']} ativas)")
     print(f"Relatório: {args.output}")
 

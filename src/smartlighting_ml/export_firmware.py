@@ -1,4 +1,4 @@
-"""Congela pesos escolhidos e exemplos para conferir a futura inferência no ESP32."""
+"""Congela pesos e exemplos para conferir a inferência integrada ao ESP32."""
 
 from __future__ import annotations
 

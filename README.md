@@ -51,11 +51,12 @@ moradores. A hora local simulada usa deslocamento fixo UTC-03:00.
 
 ## Gerar os dados
 
-Requer Python 3.11 ou superior. O ambiente `.venv` do projeto usa Python 3.13.
-Na raiz de `SmartLighting.ML`, instale a dependência de ML no ambiente virtual,
-confira o interpretador e execute:
+Requer Python 3.11 ou superior. O ambiente `.venv` usado no desenvolvimento
+utiliza Python 3.13 e não é versionado. Na raiz de `SmartLighting.ML`, crie o
+ambiente virtual, instale a dependência de ML, confira o interpretador e execute:
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install scikit-learn==1.9.1
 .\.venv\Scripts\python.exe --version
 $env:PYTHONPATH = "src"
