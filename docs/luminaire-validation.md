@@ -57,8 +57,10 @@ em PWM 255 após detecção nem o circuito elétrico. Portanto, ainda não há
 medição de economia. O relatório mostra o compromisso entre usar mais vezes
 PWM 10 e iniciar mais LED-janelas com movimento nesse nível. Escolhemos **5%**
 como limite baixo para reduzir essas ocorrências e mantivemos **25%** como
-limite alto. Os resultados continuam restritos à validação sintética; a
-política escolhida ainda não passou pela avaliação final reservada.
+limite alto naquela etapa. Os resultados continuam restritos à validação
+sintética; naquele momento, a política ainda não havia passado pela avaliação
+final reservada. A configuração atual está em
+[`current-version.md`](current-version.md).
 
 ## Arquivos e reprodução
 

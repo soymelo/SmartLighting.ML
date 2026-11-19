@@ -32,8 +32,9 @@ pedido aos LEDs que pertencem a várias zonas, usando o mapa da maquete em
 Exemplo: se `PoissonModel.predict()` devolver chance 0,18, a política escolhe
 `standard`, PWM 20/255. Se devolver 0,32, escolhe `high`, PWM 40/255.
 Mudar esses valores no JSON não altera os pesos do modelo, pois o modelo
-aprende a prever ativações, não valores de PWM. Quando a política chegar ao
-ESP32, é necessário gravar o firmware com o cabeçalho gerado atualizado.
+aprende a prever ativações, não valores de PWM. Para aplicar uma mudança de
+política no ESP32, é necessário gerar novamente o cabeçalho e gravar o
+firmware atualizado nas placas.
 
 Este arquivo descreve apenas o **repouso**. No firmware, o sensor ativo
 continua tendo alvo 255/255 e a subida e descida mantêm o fade testado na

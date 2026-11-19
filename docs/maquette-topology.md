@@ -37,17 +37,18 @@ ESP32 B: `CFB1584F-7B40-466D-89D8-8E4CDB34E49A`.
 | 10 | B | 5 | 1, 6 |
 
 São **6 sensores, 6 zonas, 10 LEDs físicos e 23 vínculos zona–LED**. Cada zona
-tem um sensor nesta maquete, mas a preparação dos dados deverá aceitar vários
+tem um sensor nesta maquete, mas a preparação dos dados aceita vários
 sensores na mesma zona. Um LED pode pertencer a várias zonas. Quando houver
-previsões diferentes para esse LED, o brilho de repouso será o **maior** nível
+previsões diferentes para esse LED, o brilho de repouso recebe o **maior** nível
 solicitado pelas zonas associadas. Uma detecção imediata continua tendo
 prioridade e leva o LED ao nível máximo.
 
 Alguns LEDs de A são associados a zonas cujo sensor está em B, e vice-versa.
-O firmware já troca estados de movimento por UART para o controle imediato.
-Antes de implementar o brilho preditivo, precisamos decidir como as previsões
-ou contagens recentes cruzarão os dois ESP32. Pacotes repetidos de estado ativo
-não podem ser contados como novas ativações.
+O firmware troca estados de movimento e novas ativações por UART. Cada placa
+conta as ativações locais e as recebidas da outra placa para manter o histórico
+de suas zonas; as mensagens repetidas de estado ativo não entram nessa
+contagem. A previsão e a escolha do repouso são calculadas localmente em cada
+ESP32.
 
 Os cenários atuais reproduzem apenas a **estrutura** de um sensor por zona.
 As taxas de ativação e os multiplicadores horários continuam hipóteses não

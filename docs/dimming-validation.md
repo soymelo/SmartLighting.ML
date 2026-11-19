@@ -51,9 +51,11 @@ O limite de 15% aumenta bastante o número de janelas em repouso baixo, mas
 também coloca nele mais janelas com movimento. O de 5% evita muitas dessas
 situações, porém mantém mais tempo no padrão e pode elevar a média devido às
 janelas altas. Após analisar também os resultados por LED, escolhemos **5%**
-para o limite baixo e mantivemos **25%** para o limite alto. Essa é a política
-configurada para a maquete, ainda sem avaliação final reservada ou medições de
-circulação real. Os níveis PWM 10/20/50 permanecem os escolhidos.
+para o limite baixo e mantivemos **25%** para o limite alto naquela etapa.
+A política então analisada usava PWM 10/20/50 e ainda não havia passado pela
+avaliação final reservada nem por medições de circulação real. A configuração
+atual usa PWM 10/20/40 e limites 5%/30%, como descrito em
+[`current-version.md`](current-version.md).
 
 ## Arquivos para inspeção
 

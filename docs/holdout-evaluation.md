@@ -2,9 +2,9 @@
 
 > **Registro histórico.** Esta avaliação usou os pesos treinados com a curva
 > horária anterior e a política PWM 10/20/50, limites 5%/25%. A curva e a
-> política foram revisadas posteriormente. Os novos pesos ainda não foram
-> exportados e este resultado não valida a configuração nova. Reutilizar o
-> mesmo `holdout` para escolher parâmetros e depois apresentá-lo como teste
+> política foram revisadas posteriormente, e os novos pesos foram exportados
+> depois desta avaliação. Este resultado não valida a configuração atual.
+> Reutilizar o mesmo `holdout` para escolher parâmetros e depois apresentá-lo como teste
 > independente comprometeria essa separação.
 
 Antes deste teste, escolhemos os pesos gerais treinados com 28 dias do cenário

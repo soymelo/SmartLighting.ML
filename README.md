@@ -359,13 +359,10 @@ os exemplos após uma hora de histórico para manter as mesmas colunas dos
 outros cenários. Por isso são 24.168 janelas de zona avaliadas, e não 24.192.
 O firmware usa PWM 20 enquanto faltar histórico suficiente.
 
-## Próximas etapas
+## Alcance dos resultados
 
-1. Verificar na maquete o comportamento dos dois ESP32 com os pesos e a
-   política atuais. Se os limites de brilho forem revistos, comparar as
-   decisões novamente e atualizar ambas as placas.
-2. Separar os resultados sintéticos das observações da maquete ao apresentar
-   as conclusões do TCC.
-
-Resultados em dados simulados demonstrarão o método e o funcionamento do
-sistema; não serão apresentados como precisão medida em um condomínio real.
+Os relatórios de avaliação medem o comportamento do modelo em dados
+sintéticos. A execução na maquete demonstra o controle local e a reação dos
+LEDs, mas não mede a precisão preditiva em circulação real nem comprova
+economia de energia. Alterações futuras nos limites de brilho exigem nova
+comparação das decisões, exportação da política e gravação de ambas as placas.
